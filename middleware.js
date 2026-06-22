@@ -7,7 +7,7 @@ export function middleware(context) {
     return next();
   }
 
-  // API 请求直接放行（Edge Functions 会处理）
+  // API 请求直接放行（由 Edge Functions 处理认证）
   if (url.pathname.startsWith('/api/')) {
     return next();
   }
@@ -26,9 +26,14 @@ export function middleware(context) {
     });
   }
   
-  // 已登录，继续处理
+  // 已登录，继续处理（返回 index.html）
   return next();
 }
+
+// 配置匹配器（可选，默认匹配所有路由）
+export const config = {
+  matcher: ['/:path*'],
+};
 
 const LOGIN_HTML = `<!DOCTYPE html>
 <html lang="zh-CN">
