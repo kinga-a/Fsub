@@ -78,6 +78,13 @@ function calcNextDate(startDate, cycle) {
   today.setHours(0, 0, 0, 0);
 
   let next = new Date(start);
+
+  // 如果开始日期在未来，直接作为下次扣费日期
+  if (start > today) {
+    return next.toISOString().split('T')[0];
+  }
+
+  // 开始日期在过去或今天，循环累加周期直到超过今天
   while (next <= today) {
     switch(cycle) {
       case 'weekly': next.setDate(next.getDate() + 7); break;
