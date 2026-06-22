@@ -1,7 +1,6 @@
 export async function onRequestPut(context) {
   const { request } = context;
 
-  // 从 URL 路径中提取 ID
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
@@ -13,7 +12,6 @@ export async function onRequestPut(context) {
   try {
     const body = await request.json();
 
-    // 价格允许为0
     if (body.price !== undefined) {
       const price = parseFloat(body.price);
       if (isNaN(price) || price < 0) {
@@ -29,7 +27,6 @@ export async function onRequestPut(context) {
       return json({ error: '订阅不存在' }, 404);
     }
 
-    // 如果周期或开始日期变了，重新计算下次扣费日期
     if (body.cycle || body.startDate) {
       const cycle = body.cycle || data[index].cycle;
       const startDate = body.startDate || data[index].startDate;
@@ -51,7 +48,6 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
-  // 从 URL 路径中提取 ID
   const url = new URL(context.request.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
