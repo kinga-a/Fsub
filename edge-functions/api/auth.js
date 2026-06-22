@@ -2,11 +2,11 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
   
+  // 从环境变量读取访问码
   const accessCode = env.ACCESS_CODE || 'admin';
   
   if (body.code === accessCode) {
     const token = await hashString(accessCode + '_salt_' + Date.now());
-    // 返回 token，由前端设置 Cookie
     return json({ success: true, token });
   }
   
