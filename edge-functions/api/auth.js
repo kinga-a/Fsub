@@ -2,7 +2,7 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
   
-  // 从环境变量读取访问码
+  // 环境变量通过 env 访问（这是正确的）
   const accessCode = env.ACCESS_CODE || 'admin';
   
   if (body.code === accessCode) {
@@ -24,9 +24,6 @@ async function hashString(str) {
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store'
-    }
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
   });
 }
