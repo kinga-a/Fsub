@@ -1,16 +1,16 @@
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
   const body = await request.json();
   
-  // 环境变量通过 context.env 访问
-  const accessCode = context.env.ACCESS_CODE || 'admin';
+  const accessCode = env.ACCESS_CODE || 'admin';
   
   if (body.code === accessCode) {
     const token = await hashString(accessCode + '_salt_' + Date.now());
+    // 返回 token，由前端设置 Cookie
     return json({ success: true, token });
   }
   
-  return json({ success: false }, 401);
+  return json({ success: false, message: '访问码错误' }, 401);
 }
 
 async function hashString(str) {
@@ -24,6 +24,9 @@ async function hashString(str) {
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store'
+    }
   });
 }
