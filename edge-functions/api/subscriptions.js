@@ -1,5 +1,4 @@
 export async function onRequestGet(context) {
-  // 直接使用全局变量 SUB_KV
   try {
     const data = await SUB_KV.get('subscriptions', 'json') || [];
     return json(data);
@@ -13,7 +12,7 @@ export async function onRequestPost(context) {
   const body = await request.json();
   
   if (!body.name || !body.price || !body.nextDate) {
-    return json({ error: '缺少必填字段（名称、价格、下次扣费日期）' }, 400);
+    return json({ error: '缺少必填字段' }, 400);
   }
   
   try {
