@@ -1,17 +1,18 @@
 export function middleware(context) {
-  const { request, next, redirect } = context;
+  const { request, next } = context;
   const url = new URL(request.url);
   
-  // 公开路径放行
+  // 公开路径直接放行
   if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/api/auth') {
     return next();
   }
   
-  // API 路径需要验证
+  // 只对 API 路径做验证
   if (url.pathname.startsWith('/api/')) {
     const authHeader = request.headers.get('Authorization');
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
