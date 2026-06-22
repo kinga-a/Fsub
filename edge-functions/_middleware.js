@@ -7,7 +7,7 @@ export function middleware(context) {
     return next();
   }
 
-  // API 放行（由各自函数处理认证）
+  // API 请求直接放行（Edge Functions 会处理）
   if (url.pathname.startsWith('/api/')) {
     return next();
   }
@@ -26,7 +26,7 @@ export function middleware(context) {
     });
   }
   
-  // 已登录，继续处理（返回 index.html）
+  // 已登录，继续处理
   return next();
 }
 
