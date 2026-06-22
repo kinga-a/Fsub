@@ -1,13 +1,7 @@
 export async function onRequestGet(context) {
-  const { env } = context;
-  const kv = env.SUB_KV;
-  
-  if (!kv) {
-    return json({ error: 'KV 存储未配置，请在控制台绑定命名空间' }, 500);
-  }
-  
+  // 直接使用全局变量 SUB_KV
   try {
-    const data = await kv.get('subscriptions', 'json') || [];
+    const data = await SUB_KV.get('subscriptions', 'json') || [];
     return json(data);
   } catch (e) {
     return json({ error: 'KV 读取失败: ' + e.message }, 500);
@@ -15,13 +9,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
-  const kv = env.SUB_KV;
-  
-  if (!kv) {
-    return json({ error: 'KV 存储未配置，请在控制台绑定命名空间' }, 500);
-  }
-  
+  const { request } = context;
   const body = await request.json();
   
   if (!body.name || !body.price || !body.nextDate) {
@@ -29,7 +17,7 @@ export async function onRequestPost(context) {
   }
   
   try {
-    const data = await kv.get('subscriptions', 'json') || [];
+    const data = await SUB_KV.get('subscriptions', 'json') || [];
     
     const newSub = {
       id: generateId(),
@@ -43,7 +31,7 @@ export async function onRequestPost(context) {
     };
     
     data.push(newSub);
-    await kv.put('subscriptions', JSON.stringify(data));
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
     
     return json(newSub, 201);
   } catch (e) {
