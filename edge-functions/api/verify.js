@@ -7,8 +7,6 @@ export async function onRequestGet(context) {
     return json({ valid: false }, 401);
   }
   
-  // 简单验证：token 存在且非空即认为有效
-  // 生产环境可结合 KV 存储会话进行更严格的验证
   const token = tokenMatch[1];
   if (!token || token.length < 10) {
     return json({ valid: false }, 401);
