@@ -1,12 +1,12 @@
 export async function onRequestGet(context) {
   const { env } = context;
   
-  if (!env.SUB_KV) {
+  if (!SUB_KV) {
     return json({ error: 'KV not bound. Please bind SUB_KV in project settings.' }, 500);
   }
   
   try {
-    const data = await env.SUB_KV.get('subscriptions', 'json');
+    const data = await SUB_KV.get('subscriptions', 'json');
     return json(data || []);
   } catch (e) {
     return json({ error: 'KV read failed: ' + e.message }, 500);
@@ -16,7 +16,7 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { request, env } = context;
   
-  if (!env.SUB_KV) {
+  if (!SUB_KV) {
     return json({ error: 'KV not bound' }, 500);
   }
   
@@ -35,7 +35,7 @@ export async function onRequestPost(context) {
     
     let data = [];
     try {
-      const stored = await env.SUB_KV.get('subscriptions', 'json');
+      const stored = await SUB_KV.get('subscriptions', 'json');
       if (stored) data = stored;
     } catch (e) {
       data = [];
@@ -53,7 +53,7 @@ export async function onRequestPost(context) {
     };
     
     data.push(newSub);
-    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
     
     return json(newSub, 201);
   } catch (e) {
