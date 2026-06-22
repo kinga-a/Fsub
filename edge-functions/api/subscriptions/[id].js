@@ -1,12 +1,22 @@
-// EdgeOne 主站控制台：KV 作为全局变量绑定，直接使用 SUB_KV
-
 export async function onRequestPut(context) {
+  if (typeof SUB_KV === 'undefined') {
+    return json({ error: 'KV not bound: SUB_KV is undefined' }, 500);
+  }
+  
   const { request, params } = context;
   const id = params.id;
   
   try {
     const body = await request.json();
-    let data = await SUB_KV.get('subscriptions', 'json') || [];
+    let data = [];
+    
+    try {
+      const stored = await SUB_KV.get('subscriptions', 'json');
+      if (stored) data = stored;
+    } catch (e) {
+      data = [];
+    }
+    
     const index = data.findIndex(s => s.id === id);
     
     if (index === -1) {
@@ -28,11 +38,23 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
+  if (typeof SUB_KV === 'undefined') {
+    return json({ error: 'KV not bound: SUB_KV is undefined' }, 500);
+  }
+  
   const { params } = context;
   const id = params.id;
   
   try {
-    let data = await SUB_KV.get('subscriptions', 'json') || [];
+    let data = [];
+    
+    try {
+      const stored = await SUB_KV.get('subscriptions', 'json');
+      if (stored) data = stored;
+    } catch (e) {
+      data = [];
+    }
+    
     const exists = data.some(s => s.id === id);
     
     if (!exists) {
