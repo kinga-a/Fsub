@@ -2,13 +2,13 @@ export function middleware(context) {
   const { request, next } = context;
   const url = new URL(request.url);
 
-  // 静态资源放行（CSS/JS/图片等）
+  // 静态资源放行
   if (url.pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
     return next();
   }
 
-  // 登录 API 和验证 API 放行
-  if (url.pathname === '/api/auth' || url.pathname === '/api/verify') {
+  // API 放行（由各自函数处理认证）
+  if (url.pathname.startsWith('/api/')) {
     return next();
   }
 
@@ -17,30 +17,16 @@ export function middleware(context) {
   const tokenMatch = cookie.match(/sub_token=([^;]+)/);
   
   if (!tokenMatch) {
-    // 根路径返回登录页
-    if (url.pathname === '/' || url.pathname === '/index.html') {
-      return new Response(LOGIN_HTML, {
-        headers: { 
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-store'
-        }
-      });
-    }
-    // API 请求返回 401
-    if (url.pathname.startsWith('/api/')) {
-      return new Response(JSON.stringify({ error: '未授权，请先登录' }), {
-        status: 401,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store'
-        }
-      });
-    }
-    // 其他路径重定向到首页
-    return Response.redirect(url.origin + '/', 302);
+    // 未登录，返回登录页
+    return new Response(LOGIN_HTML, {
+      headers: { 
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store'
+      }
+    });
   }
   
-  // 有 token，继续处理
+  // 已登录，继续处理（返回 index.html）
   return next();
 }
 
