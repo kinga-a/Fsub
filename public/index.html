@@ -160,48 +160,148 @@
     .modal {
       background: white;
       border-radius: 20px;
-      width: 90%;
-      max-width: 560px;
-      max-height: 90vh;
+      width: 92%;
+      max-width: 640px;
+      max-height: 92vh;
       overflow-y: auto;
       box-shadow: 0 25px 80px rgba(0,0,0,0.3);
     }
     .modal-header {
-      padding: 24px;
+      padding: 20px 24px;
       border-bottom: 1px solid #edf2f7;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .modal-header h3 { font-size: 18px; }
-    .modal-body { padding: 24px; }
-    .form-group { margin-bottom: 20px; }
+    .modal-body { padding: 20px 24px; }
+
+    /* 紧凑表单样式 */
+    .form-group {
+      margin-bottom: 14px;
+    }
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       color: #4a5568;
     }
-    .form-group input, .form-group select {
+    .form-group input,
+    .form-group select {
       width: 100%;
-      padding: 12px 14px;
+      padding: 8px 12px;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 15px;
+      border-radius: 8px;
+      font-size: 14px;
       transition: border-color 0.3s;
+      height: 38px;
     }
-    .form-group input:focus, .form-group select:focus {
+    .form-group input:focus,
+    .form-group select:focus {
       outline: none;
       border-color: #667eea;
     }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group input[type="checkbox"] {
+      width: auto;
+      height: auto;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .form-row-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
     .modal-footer {
-      padding: 20px 24px;
+      padding: 16px 24px;
       border-top: 1px solid #edf2f7;
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
+      gap: 10px;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #a0aec0;
+      margin-top: 3px;
+    }
+    .auto-calc {
+      background: #f0fff4;
+      border: 1px solid #9ae6b4;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #22543d;
+      margin-top: 6px;
+    }
+    .next-date-display {
+      background: #edf2f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: #2d3748;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+    }
+    .next-date-display .label {
+      font-size: 12px;
+      color: #718096;
+      font-weight: normal;
+    }
+
+    .notify-time-display {
+      background: #e6fffa;
+      border: 1px solid #81e6d9;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #234e52;
+      margin-top: 6px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 6px 0;
+    }
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: normal;
+      font-size: 14px;
+      cursor: pointer;
+      color: #4a5568;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #667eea;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2d3748;
+      margin: 16px 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     .notify-modal { max-width: 600px; }
@@ -287,35 +387,13 @@
     .toast.success { background: #48bb78; }
     .toast.error { background: #e53e3e; }
 
-    .hint {
-      font-size: 12px;
-      color: #a0aec0;
-      margin-top: 4px;
-    }
-    .auto-calc {
-      background: #f0fff4;
-      border: 1px solid #9ae6b4;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: #22543d;
-      margin-top: 8px;
-    }
-    .notify-time-display {
-      background: #e6fffa;
-      border: 1px solid #81e6d9;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: #234e52;
-      margin-top: 8px;
-    }
-
     @media (max-width: 768px) {
       .stats { grid-template-columns: 1fr 1fr; }
       .toolbar { flex-direction: column; align-items: stretch; }
       .search-box { width: 100%; }
       .form-row { grid-template-columns: 1fr; }
+      .form-row-2 { grid-template-columns: 1fr; }
+      .form-row-4 { grid-template-columns: repeat(2, 1fr); }
       th, td { padding: 12px 8px; font-size: 14px; }
       .header { flex-direction: column; gap: 16px; text-align: center; }
       .notify-tabs { justify-content: center; }
@@ -391,7 +469,7 @@
     </div>
   </div>
 
-  <!-- 订阅编辑弹窗 -->
+  <!-- 订阅编辑弹窗 - 紧凑布局 -->
   <div class="modal-bg" id="modalBg">
     <div class="modal">
       <div class="modal-header">
@@ -399,6 +477,8 @@
         <button class="icon-btn" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
+        <!-- 基础信息 -->
+        <div class="section-title">📋 基础信息</div>
         <div class="form-group">
           <label>服务名称 *</label>
           <input type="text" id="mName" placeholder="例如：Netflix、Spotify">
@@ -407,7 +487,7 @@
           <div class="form-group">
             <label>价格</label>
             <input type="number" id="mPrice" placeholder="0" step="0.01" min="0">
-            <div class="hint">支持输入 0（免费订阅）</div>
+            <div class="hint">支持 0（免费）</div>
           </div>
           <div class="form-group">
             <label>货币</label>
@@ -419,8 +499,6 @@
               <option value="JPY">JPY ¥</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <label>付费周期 *</label>
             <select id="mCycle" onchange="calcNextDate()">
@@ -430,20 +508,25 @@
               <option value="yearly">年付</option>
             </select>
           </div>
+        </div>
+
+        <!-- 日期设置 -->
+        <div class="section-title">📅 日期设置</div>
+        <div class="form-row">
           <div class="form-group">
             <label>开始日期 *</label>
             <input type="date" id="mStartDate" onchange="calcNextDate()">
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <label>下次扣费日期</label>
-            <input type="date" id="mNextDate" onchange="manualNextDate()">
-            <div class="hint">自动计算，也可手动修改</div>
+            <div class="next-date-display" id="nextDateDisplay">
+              <span class="label">自动计算</span>
+              <span id="nextDateValue">--</span>
+            </div>
           </div>
           <div class="form-group">
             <label>提前通知天数</label>
-            <select id="mNotifyDays">
+            <select id="mNotifyDays" onchange="updateNotifyHint()">
               <option value="1">1 天</option>
               <option value="3">3 天</option>
               <option value="7" selected>7 天</option>
@@ -452,36 +535,34 @@
             </select>
           </div>
         </div>
+        <div id="calcHint" class="auto-calc" style="display:none;"></div>
+
+        <!-- 通知设置 -->
+        <div class="section-title">🔔 通知设置</div>
         <div class="form-row">
           <div class="form-group">
             <label>通知时间</label>
-            <input type="time" id="mNotifyTime" value="08:00">
-            <div class="hint">到期前指定天数的发送时间</div>
+            <input type="time" id="mNotifyTime" value="08:00" onchange="updateNotifyHint()">
+            <div class="hint">到期前指定天数的提醒时间</div>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>通知方式</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="mNotifyDingtalk"> 钉钉</label>
+              <label><input type="checkbox" id="mNotifyFeishu"> 飞书</label>
+              <label><input type="checkbox" id="mNotifyWecom"> 企业微信</label>
+              <label><input type="checkbox" id="mNotifyEmail"> 邮件</label>
+            </div>
           </div>
         </div>
         <div id="notifyTimeHint" class="notify-time-display" style="display:none;"></div>
-        <div class="form-group">
-          <label>通知方式</label>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer;">
-              <input type="checkbox" id="mNotifyDingtalk" style="width:auto;"> 钉钉
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer;">
-              <input type="checkbox" id="mNotifyFeishu" style="width:auto;"> 飞书
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer;">
-              <input type="checkbox" id="mNotifyWecom" style="width:auto;"> 企业微信
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-weight:normal;cursor:pointer;">
-              <input type="checkbox" id="mNotifyEmail" style="width:auto;"> 邮件
-            </label>
-          </div>
-        </div>
+
+        <!-- 备注 -->
+        <div class="section-title">📝 其他</div>
         <div class="form-group">
           <label>备注</label>
           <input type="text" id="mNote" placeholder="可选：账号信息、共享人数等">
         </div>
-        <div id="calcHint" class="auto-calc" style="display:none;"></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -554,7 +635,7 @@
             <input type="checkbox" id="emailEnabled">
             <label for="emailEnabled">启用邮件通知</label>
           </div>
-          <div class="form-row">
+          <div class="form-row-2">
             <div class="form-group">
               <label>SMTP 服务器</label>
               <input type="text" id="emailSmtpHost" placeholder="smtp.gmail.com">
@@ -564,7 +645,7 @@
               <input type="number" id="emailSmtpPort" value="587">
             </div>
           </div>
-          <div class="form-row">
+          <div class="form-row-2">
             <div class="form-group">
               <label>用户名</label>
               <input type="text" id="emailUsername" placeholder="your@email.com">
@@ -594,7 +675,6 @@
     let subs = [];
     let editingId = null;
     let notifyConfig = {};
-    let nextDateManual = false;
 
     // 计算下次扣费日期
     function calcNextDate() {
@@ -603,6 +683,7 @@
 
       if (!startDate) {
         document.getElementById('calcHint').style.display = 'none';
+        document.getElementById('nextDateValue').textContent = '--';
         return;
       }
 
@@ -622,43 +703,34 @@
         }
       }
 
-      if (!nextDateManual) {
-        document.getElementById('mNextDate').value = next.toISOString().split('T')[0];
-      }
+      const nextDateStr = next.toISOString().split('T')[0];
+      document.getElementById('nextDateValue').textContent = nextDateStr;
 
       const cycleText = {weekly:'每周', monthly:'每月', quarterly:'每季度', yearly:'每年'};
       document.getElementById('calcHint').style.display = 'block';
       document.getElementById('calcHint').textContent = 
-          `✅ 基于开始日期 ${startDate} 和 ${cycleText[cycle]}周期，自动计算下次扣费日期为 ${next.toISOString().split('T')[0]}`;
+          `✅ ${cycleText[cycle]}周期：从 ${startDate} 开始，下次扣费 ${nextDateStr}`;
 
-      updateNotifyTimeHint();
-    }
-
-    function manualNextDate() {
-      nextDateManual = true;
-      document.getElementById('calcHint').style.display = 'none';
+      updateNotifyHint();
     }
 
     // 更新通知时间提示
-    function updateNotifyTimeHint() {
+    function updateNotifyHint() {
       const days = document.getElementById('mNotifyDays').value;
       const time = document.getElementById('mNotifyTime').value;
-      const nextDate = document.getElementById('mNextDate').value;
+      const nextDate = document.getElementById('nextDateValue').textContent;
 
-      if (nextDate && time) {
+      if (nextDate && nextDate !== '--' && time) {
         const notifyDate = new Date(nextDate);
         notifyDate.setDate(notifyDate.getDate() - parseInt(days));
         const dateStr = notifyDate.toLocaleDateString('zh-CN');
         document.getElementById('notifyTimeHint').style.display = 'block';
         document.getElementById('notifyTimeHint').textContent = 
             `📅 将在 ${dateStr} ${time} 发送到期提醒（提前 ${days} 天）`;
+      } else {
+        document.getElementById('notifyTimeHint').style.display = 'none';
       }
     }
-
-    // 监听通知天数和时间变化
-    document.getElementById('mNotifyDays').addEventListener('change', updateNotifyTimeHint);
-    document.getElementById('mNotifyTime').addEventListener('change', updateNotifyTimeHint);
-    document.getElementById('mNextDate').addEventListener('change', updateNotifyTimeHint);
 
     async function load() {
       try {
@@ -774,17 +846,20 @@
 
     function openModal() {
       editingId = null;
-      nextDateManual = false;
       document.getElementById('modalTitle').textContent = '新增订阅';
-      ['mName','mPrice','mNote','mStartDate','mNextDate'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('mName').value = '';
+      document.getElementById('mPrice').value = '';
       document.getElementById('mCurrency').value = 'CNY';
       document.getElementById('mCycle').value = 'monthly';
+      document.getElementById('mStartDate').value = '';
+      document.getElementById('nextDateValue').textContent = '--';
       document.getElementById('mNotifyDays').value = '7';
       document.getElementById('mNotifyTime').value = '08:00';
       document.getElementById('mNotifyDingtalk').checked = false;
       document.getElementById('mNotifyFeishu').checked = false;
       document.getElementById('mNotifyWecom').checked = false;
       document.getElementById('mNotifyEmail').checked = false;
+      document.getElementById('mNote').value = '';
       document.getElementById('calcHint').style.display = 'none';
       document.getElementById('notifyTimeHint').style.display = 'none';
       document.getElementById('modalBg').classList.add('open');
@@ -795,13 +870,19 @@
     }
 
     async function save() {
+      const nextDate = document.getElementById('nextDateValue').textContent;
+      if (nextDate === '--') {
+        toast('请选择开始日期以生成下次扣费日期', 'error');
+        return;
+      }
+
       const data = {
         name: document.getElementById('mName').value.trim(),
         price: parseFloat(document.getElementById('mPrice').value) || 0,
         currency: document.getElementById('mCurrency').value,
         cycle: document.getElementById('mCycle').value,
         startDate: document.getElementById('mStartDate').value,
-        nextDate: document.getElementById('mNextDate').value,
+        nextDate: nextDate,
         notifyDays: parseInt(document.getElementById('mNotifyDays').value),
         notifyTime: document.getElementById('mNotifyTime').value,
         notifyDingtalk: document.getElementById('mNotifyDingtalk').checked,
@@ -813,7 +894,6 @@
 
       if (!data.name) { toast('请输入服务名称', 'error'); return; }
       if (!data.startDate) { toast('请选择开始日期', 'error'); return; }
-      if (!data.nextDate) { toast('下次扣费日期不能为空', 'error'); return; }
 
       const url = editingId ? '/api/subscriptions/' + editingId : '/api/subscriptions';
       const method = editingId ? 'PUT' : 'POST';
@@ -842,14 +922,13 @@
       const s = subs.find(x => x.id === id);
       if (!s) return;
       editingId = id;
-      nextDateManual = false;
       document.getElementById('modalTitle').textContent = '编辑订阅';
       document.getElementById('mName').value = s.name;
       document.getElementById('mPrice').value = s.price;
       document.getElementById('mCurrency').value = s.currency;
       document.getElementById('mCycle').value = s.cycle;
       document.getElementById('mStartDate').value = s.startDate;
-      document.getElementById('mNextDate').value = s.nextDate;
+      document.getElementById('nextDateValue').textContent = s.nextDate;
       document.getElementById('mNotifyDays').value = s.notifyDays || 7;
       document.getElementById('mNotifyTime').value = s.notifyTime || '08:00';
       document.getElementById('mNotifyDingtalk').checked = s.notifyDingtalk || false;
@@ -858,7 +937,7 @@
       document.getElementById('mNotifyEmail').checked = s.notifyEmail || false;
       document.getElementById('mNote').value = s.note || '';
       document.getElementById('calcHint').style.display = 'none';
-      updateNotifyTimeHint();
+      updateNotifyHint();
       document.getElementById('modalBg').classList.add('open');
     }
 
