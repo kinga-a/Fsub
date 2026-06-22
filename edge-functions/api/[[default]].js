@@ -1,6 +1,10 @@
 export async function onRequestPut(context) {
-  const { params, request } = context;
-  const id = params.id;
+  const { request } = context;
+  
+  // 从 URL 路径中提取 ID
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const id = pathParts[pathParts.length - 1];
   
   try {
     const body = await request.json();
@@ -26,8 +30,10 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
-  const { params } = context;
-  const id = params.id;
+  // 从 URL 路径中提取 ID
+  const url = new URL(context.request.url);
+  const pathParts = url.pathname.split('/');
+  const id = pathParts[pathParts.length - 1];
   
   try {
     let data = await SUB_KV.get('subscriptions', 'json') || [];
