@@ -1,24 +1,23 @@
 export async function onRequestPut(context) {
-  if (typeof SUB_KV === 'undefined') {
-    return json({ error: 'KV not bound: SUB_KV is undefined' }, 500);
-  }
-  
-  const { request, params } = context;
+  const { request, env, params } = context;
   const id = params.id;
+  
+  if (!env.SUB_KV) {
+    return json({ error: 'KV not bound' }, 500);
+  }
   
   try {
     const body = await request.json();
     let data = [];
     
     try {
-      const stored = await SUB_KV.get('subscriptions', 'json');
+      const stored = await env.SUB_KV.get('subscriptions', 'json');
       if (stored) data = stored;
     } catch (e) {
       data = [];
     }
     
     const index = data.findIndex(s => s.id === id);
-    
     if (index === -1) {
       return json({ error: '订阅不存在' }, 404);
     }
@@ -30,7 +29,7 @@ export async function onRequestPut(context) {
       updatedAt: new Date().toISOString()
     };
     
-    await SUB_KV.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
     return json(data[index]);
   } catch (e) {
     return json({ error: 'KV update failed: ' + e.message }, 500);
@@ -38,31 +37,30 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
-  if (typeof SUB_KV === 'undefined') {
-    return json({ error: 'KV not bound: SUB_KV is undefined' }, 500);
-  }
-  
-  const { params } = context;
+  const { env, params } = context;
   const id = params.id;
+  
+  if (!env.SUB_KV) {
+    return json({ error: 'KV not bound' }, 500);
+  }
   
   try {
     let data = [];
     
     try {
-      const stored = await SUB_KV.get('subscriptions', 'json');
+      const stored = await env.SUB_KV.get('subscriptions', 'json');
       if (stored) data = stored;
     } catch (e) {
       data = [];
     }
     
     const exists = data.some(s => s.id === id);
-    
     if (!exists) {
       return json({ error: '订阅不存在' }, 404);
     }
     
     data = data.filter(s => s.id !== id);
-    await SUB_KV.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
     
     return json({ success: true });
   } catch (e) {
