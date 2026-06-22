@@ -1,8 +1,9 @@
-// EdgeOne 主站控制台：KV 作为全局变量绑定，直接使用 SUB_KV
-// 无需通过 env，在控制台绑定后作为全局变量注入
-
 export async function onRequestGet(context) {
-  // 直接使用全局变量 SUB_KV，不是 env.SUB_KV
+  // 检查 SUB_KV 是否定义
+  if (typeof SUB_KV === 'undefined') {
+    return json({ error: 'KV not bound: SUB_KV is undefined' }, 500);
+  }
+  
   try {
     const data = await SUB_KV.get('subscriptions', 'json');
     return json(data || []);
@@ -12,16 +13,32 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
+  if (typeof SUB_KV === 'undefined') {
+    return json({ error: 'KV not bound: SUB_KV is undefined' }, 500);
+  }
+  
   const { request } = context;
   
   try {
     const body = await request.json();
     
-    if (!body.name || !body.price || !body.nextDate) {
-      return json({ error: '缺少必填字段 (name, price, nextDate)' }, 400);
+    if (!body.name || body.name.trim() === '') {
+      return json({ error: '服务名称不能为空' }, 400);
+    }
+    if (!body.price || isNaN(parseFloat(body.price))) {
+      return json({ error: '价格必须为有效数字' }, 400);
+    }
+    if (!body.nextDate) {
+      return json({ error: '下次扣费日期不能为空' }, 400);
     }
     
-    let data = await SUB_KV.get('subscriptions', 'json') || [];
+    let data = [];
+    try {
+      const stored = await SUB_KV.get('subscriptions', 'json');
+      if (stored) data = stored;
+    } catch (e) {
+      data = [];
+    }
     
     const newSub = {
       id: generateId(),
