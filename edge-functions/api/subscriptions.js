@@ -33,11 +33,11 @@ export async function onRequestPost(context) {
       startDate: body.startDate,
       nextDate: body.nextDate || calcNextDate(body.startDate, body.cycle),
       notifyDays: parseInt(body.notifyDays) || 7,
+      notifyTime: body.notifyTime || '08:00',
       notifyDingtalk: body.notifyDingtalk || false,
       notifyFeishu: body.notifyFeishu || false,
       notifyWecom: body.notifyWecom || false,
       notifyEmail: body.notifyEmail || false,
-      notifyFreq: body.notifyFreq || 'daily',
       note: body.note || '',
       createdAt: new Date().toISOString()
     };
