@@ -1,4 +1,3 @@
-// 获取通知配置
 export async function onRequestGet(context) {
   try {
     const config = await SUB_KV.get('notify_config', 'json') || {
@@ -7,7 +6,6 @@ export async function onRequestGet(context) {
       wecom: { enabled: false, webhook: '', key: '' },
       email: { enabled: false, smtpHost: '', smtpPort: 587, username: '', password: '', to: '' }
     };
-    // 返回时隐藏敏感信息
     const safeConfig = {
       dingtalk: { enabled: config.dingtalk?.enabled || false, webhook: maskUrl(config.dingtalk?.webhook) },
       feishu: { enabled: config.feishu?.enabled || false, webhook: maskUrl(config.feishu?.webhook) },
@@ -20,7 +18,6 @@ export async function onRequestGet(context) {
   }
 }
 
-// 保存通知配置
 export async function onRequestPost(context) {
   const { request } = context;
   
@@ -61,7 +58,6 @@ export async function onRequestPost(context) {
   }
 }
 
-// 测试发送通知
 export async function onRequestPut(context) {
   const { request } = context;
   
