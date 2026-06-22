@@ -140,7 +140,6 @@
     .empty svg { margin-bottom: 16px; opacity: 0.5; }
     .empty h3 { color: #4a5568; margin-bottom: 8px; }
     
-    /* Modal */
     .modal-bg {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -350,11 +349,22 @@
     let editingId = null;
 
     async function load() {
-      const res = await fetch('/api/subscriptions');
-      if (!res.ok) return location.reload();
-      subs = await res.json();
-      render();
-      stats();
+      try {
+        const res = await fetch('/api/subscriptions');
+        if (res.status === 401) {
+          // Token 失效，刷新页面让中间件处理
+          location.reload();
+          return;
+        }
+        if (!res.ok) {
+          throw new Error('加载失败: ' + res.status);
+        }
+        subs = await res.json();
+        render();
+        stats();
+      } catch (e) {
+        toast('加载数据失败: ' + e.message, 'error');
+      }
     }
 
     function render() {
@@ -455,12 +465,12 @@
 
     async function save() {
       const data = {
-        name: document.getElementById('mName').value,
+        name: document.getElementById('mName').value.trim(),
         price: parseFloat(document.getElementById('mPrice').value),
         currency: document.getElementById('mCurrency').value,
         cycle: document.getElementById('mCycle').value,
         nextDate: document.getElementById('mNextDate').value,
-        note: document.getElementById('mNote').value
+        note: document.getElementById('mNote').value.trim()
       };
       if (!data.name || !data.price || !data.nextDate) {
         toast('请填写必填项', 'error');
@@ -470,17 +480,27 @@
       const url = editingId ? '/api/subscriptions/' + editingId : '/api/subscriptions';
       const method = editingId ? 'PUT' : 'POST';
       
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      if (res.ok) {
-        closeModal();
-        load();
-        toast(editingId ? '更新成功' : '添加成功', 'success');
-      } else {
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (res.status === 401) {
+          location.reload();
+          return;
+        }
+        
+        if (res.ok) {
+          closeModal();
+          load();
+          toast(editingId ? '更新成功' : '添加成功', 'success');
+        } else {
+          const err = await res.json();
+          toast(err.error || '操作失败', 'error');
+        }
+      } catch (e) {
         toast('操作失败', 'error');
       }
     }
@@ -501,10 +521,21 @@
 
     async function del(id) {
       if (!confirm('确定删除这个订阅？')) return;
-      const res = await fetch('/api/subscriptions/' + id, { method: 'DELETE' });
-      if (res.ok) {
-        load();
-        toast('删除成功', 'success');
+      try {
+        const res = await fetch('/api/subscriptions/' + id, { method: 'DELETE' });
+        if (res.status === 401) {
+          location.reload();
+          return;
+        }
+        if (res.ok) {
+          load();
+          toast('删除成功', 'success');
+        } else {
+          const err = await res.json();
+          toast(err.error || '删除失败', 'error');
+        }
+      } catch (e) {
+        toast('删除失败', 'error');
       }
     }
 
