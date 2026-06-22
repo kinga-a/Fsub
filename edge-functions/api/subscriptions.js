@@ -1,76 +1,46 @@
-// 订阅数据 CRUD API
+// EdgeOne 主站控制台：KV 作为全局变量绑定，直接使用 SUB_KV
+// 无需通过 env，在控制台绑定后作为全局变量注入
+
 export async function onRequestGet(context) {
-  const { env } = context;
-  const data = await env.SUB_KV.get('subscriptions', 'json') || [];
-  return json(data);
+  // 直接使用全局变量 SUB_KV，不是 env.SUB_KV
+  try {
+    const data = await SUB_KV.get('subscriptions', 'json');
+    return json(data || []);
+  } catch (e) {
+    return json({ error: 'KV read failed: ' + e.message }, 500);
+  }
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
-  const body = await request.json();
+  const { request } = context;
   
-  // 数据校验
-  if (!body.name || !body.price || !body.nextDate) {
-    return json({ error: '缺少必填字段' }, 400);
+  try {
+    const body = await request.json();
+    
+    if (!body.name || !body.price || !body.nextDate) {
+      return json({ error: '缺少必填字段 (name, price, nextDate)' }, 400);
+    }
+    
+    let data = await SUB_KV.get('subscriptions', 'json') || [];
+    
+    const newSub = {
+      id: generateId(),
+      name: body.name.trim(),
+      price: parseFloat(body.price),
+      currency: body.currency || 'CNY',
+      cycle: body.cycle || 'monthly',
+      nextDate: body.nextDate,
+      note: (body.note || '').trim(),
+      createdAt: new Date().toISOString()
+    };
+    
+    data.push(newSub);
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
+    
+    return json(newSub, 201);
+  } catch (e) {
+    return json({ error: 'KV write failed: ' + e.message }, 500);
   }
-  
-  let data = await env.SUB_KV.get('subscriptions', 'json') || [];
-  
-  const newSub = {
-    id: generateId(),
-    name: body.name.trim(),
-    price: parseFloat(body.price),
-    currency: body.currency || 'CNY',
-    cycle: body.cycle || 'monthly',
-    nextDate: body.nextDate,
-    note: (body.note || '').trim(),
-    createdAt: new Date().toISOString()
-  };
-  
-  data.push(newSub);
-  await env.SUB_KV.put('subscriptions', JSON.stringify(data));
-  
-  return json(newSub, 201);
-}
-
-export async function onRequestPut(context) {
-  const { request, env, params } = context;
-  const id = params.id;
-  const body = await request.json();
-  
-  let data = await env.SUB_KV.get('subscriptions', 'json') || [];
-  const index = data.findIndex(s => s.id === id);
-  
-  if (index === -1) {
-    return json({ error: '订阅不存在' }, 404);
-  }
-  
-  data[index] = {
-    ...data[index],
-    ...body,
-    id: data[index].id,
-    updatedAt: new Date().toISOString()
-  };
-  
-  await env.SUB_KV.put('subscriptions', JSON.stringify(data));
-  return json(data[index]);
-}
-
-export async function onRequestDelete(context) {
-  const { env, params } = context;
-  const id = params.id;
-  
-  let data = await env.SUB_KV.get('subscriptions', 'json') || [];
-  const exists = data.some(s => s.id === id);
-  
-  if (!exists) {
-    return json({ error: '订阅不存在' }, 404);
-  }
-  
-  data = data.filter(s => s.id !== id);
-  await env.SUB_KV.put('subscriptions', JSON.stringify(data));
-  
-  return json({ success: true });
 }
 
 function json(data, status = 200) {
