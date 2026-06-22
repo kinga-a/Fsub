@@ -1,18 +1,30 @@
 export async function onRequestGet(context) {
-  // KV 作为全局变量直接使用，不是 env.SUB_KV
-  const data = await SUB_KV.get('subscriptions', 'json') || [];
+  const { env } = context;
+  const kv = env.SUB_KV;
+  
+  if (!kv) {
+    return json({ error: 'KV 存储未配置' }, 500);
+  }
+  
+  const data = await kv.get('subscriptions', 'json') || [];
   return json(data);
 }
 
 export async function onRequestPost(context) {
-  const body = await context.request.json();
+  const { request, env } = context;
+  const kv = env.SUB_KV;
   
-  // 校验必填字段
+  if (!kv) {
+    return json({ error: 'KV 存储未配置' }, 500);
+  }
+  
+  const body = await request.json();
+  
   if (!body.name || !body.price || !body.nextDate) {
     return json({ error: '缺少必填字段' }, 400);
   }
   
-  const data = await SUB_KV.get('subscriptions', 'json') || [];
+  const data = await kv.get('subscriptions', 'json') || [];
   
   const newSub = {
     id: generateId(),
@@ -26,7 +38,7 @@ export async function onRequestPost(context) {
   };
   
   data.push(newSub);
-  await SUB_KV.put('subscriptions', JSON.stringify(data));
+  await kv.put('subscriptions', JSON.stringify(data));
   
   return json(newSub, 201);
 }
@@ -38,6 +50,9 @@ function generateId() {
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store'
+    }
   });
 }
