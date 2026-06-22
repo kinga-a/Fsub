@@ -301,6 +301,15 @@
       color: #22543d;
       margin-top: 8px;
     }
+    .notify-time-display {
+      background: #e6fffa;
+      border: 1px solid #81e6d9;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #234e52;
+      margin-top: 8px;
+    }
 
     @media (max-width: 768px) {
       .stats { grid-template-columns: 1fr 1fr; }
@@ -443,6 +452,14 @@
             </select>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>通知时间</label>
+            <input type="time" id="mNotifyTime" value="08:00">
+            <div class="hint">到期前指定天数的发送时间</div>
+          </div>
+        </div>
+        <div id="notifyTimeHint" class="notify-time-display" style="display:none;"></div>
         <div class="form-group">
           <label>通知方式</label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -459,14 +476,6 @@
               <input type="checkbox" id="mNotifyEmail" style="width:auto;"> 邮件
             </label>
           </div>
-        </div>
-        <div class="form-group">
-          <label>通知频率</label>
-          <select id="mNotifyFreq">
-            <option value="once">仅通知一次</option>
-            <option value="daily" selected>每天提醒</option>
-            <option value="weekly">每周提醒</option>
-          </select>
         </div>
         <div class="form-group">
           <label>备注</label>
@@ -592,11 +601,14 @@
       const startDate = document.getElementById('mStartDate').value;
       const cycle = document.getElementById('mCycle').value;
 
-      if (!startDate) return;
+      if (!startDate) {
+        document.getElementById('calcHint').style.display = 'none';
+        return;
+      }
 
       const start = new Date(startDate);
       const today = new Date();
-      today.setHours(0,0,0,0);
+      today.setHours(0, 0, 0, 0);
 
       let next = new Date(start);
 
@@ -617,13 +629,36 @@
       const cycleText = {weekly:'每周', monthly:'每月', quarterly:'每季度', yearly:'每年'};
       document.getElementById('calcHint').style.display = 'block';
       document.getElementById('calcHint').textContent = 
-          `基于开始日期 ${startDate} 和 ${cycleText[cycle]}周期，自动计算下次扣费日期为 ${next.toISOString().split('T')[0]}`;
+          `✅ 基于开始日期 ${startDate} 和 ${cycleText[cycle]}周期，自动计算下次扣费日期为 ${next.toISOString().split('T')[0]}`;
+
+      updateNotifyTimeHint();
     }
 
     function manualNextDate() {
       nextDateManual = true;
       document.getElementById('calcHint').style.display = 'none';
     }
+
+    // 更新通知时间提示
+    function updateNotifyTimeHint() {
+      const days = document.getElementById('mNotifyDays').value;
+      const time = document.getElementById('mNotifyTime').value;
+      const nextDate = document.getElementById('mNextDate').value;
+
+      if (nextDate && time) {
+        const notifyDate = new Date(nextDate);
+        notifyDate.setDate(notifyDate.getDate() - parseInt(days));
+        const dateStr = notifyDate.toLocaleDateString('zh-CN');
+        document.getElementById('notifyTimeHint').style.display = 'block';
+        document.getElementById('notifyTimeHint').textContent = 
+            `📅 将在 ${dateStr} ${time} 发送到期提醒（提前 ${days} 天）`;
+      }
+    }
+
+    // 监听通知天数和时间变化
+    document.getElementById('mNotifyDays').addEventListener('change', updateNotifyTimeHint);
+    document.getElementById('mNotifyTime').addEventListener('change', updateNotifyTimeHint);
+    document.getElementById('mNextDate').addEventListener('change', updateNotifyTimeHint);
 
     async function load() {
       try {
@@ -675,7 +710,7 @@
           <td><span class="tag tag-${st.cls}">${st.text}</span></td>
           <td>
             ${notifyChannels.length > 0 
-              ? `<span class="tag tag-notify">${st.notifyText || notifyChannels.join(',')}</span>` 
+              ? `<span class="tag tag-notify" title="提前${s.notifyDays || 7}天 ${s.notifyTime || '08:00'}提醒">${st.notifyText || notifyChannels.join(',')}</span>` 
               : '-'}
           </td>
           <td>${esc(s.note || '-')}</td>
@@ -745,12 +780,13 @@
       document.getElementById('mCurrency').value = 'CNY';
       document.getElementById('mCycle').value = 'monthly';
       document.getElementById('mNotifyDays').value = '7';
-      document.getElementById('mNotifyFreq').value = 'daily';
+      document.getElementById('mNotifyTime').value = '08:00';
       document.getElementById('mNotifyDingtalk').checked = false;
       document.getElementById('mNotifyFeishu').checked = false;
       document.getElementById('mNotifyWecom').checked = false;
       document.getElementById('mNotifyEmail').checked = false;
       document.getElementById('calcHint').style.display = 'none';
+      document.getElementById('notifyTimeHint').style.display = 'none';
       document.getElementById('modalBg').classList.add('open');
     }
 
@@ -767,11 +803,11 @@
         startDate: document.getElementById('mStartDate').value,
         nextDate: document.getElementById('mNextDate').value,
         notifyDays: parseInt(document.getElementById('mNotifyDays').value),
+        notifyTime: document.getElementById('mNotifyTime').value,
         notifyDingtalk: document.getElementById('mNotifyDingtalk').checked,
         notifyFeishu: document.getElementById('mNotifyFeishu').checked,
         notifyWecom: document.getElementById('mNotifyWecom').checked,
         notifyEmail: document.getElementById('mNotifyEmail').checked,
-        notifyFreq: document.getElementById('mNotifyFreq').value,
         note: document.getElementById('mNote').value.trim()
       };
 
@@ -815,13 +851,14 @@
       document.getElementById('mStartDate').value = s.startDate;
       document.getElementById('mNextDate').value = s.nextDate;
       document.getElementById('mNotifyDays').value = s.notifyDays || 7;
+      document.getElementById('mNotifyTime').value = s.notifyTime || '08:00';
       document.getElementById('mNotifyDingtalk').checked = s.notifyDingtalk || false;
       document.getElementById('mNotifyFeishu').checked = s.notifyFeishu || false;
       document.getElementById('mNotifyWecom').checked = s.notifyWecom || false;
       document.getElementById('mNotifyEmail').checked = s.notifyEmail || false;
-      document.getElementById('mNotifyFreq').value = s.notifyFreq || 'daily';
       document.getElementById('mNote').value = s.note || '';
       document.getElementById('calcHint').style.display = 'none';
+      updateNotifyTimeHint();
       document.getElementById('modalBg').classList.add('open');
     }
 
