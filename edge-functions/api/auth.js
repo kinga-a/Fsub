@@ -1,26 +1,31 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
-  const body = await request.json();
   
-  const accessCode = env.ACCESS_CODE || 'admin';
-  
-  if (body.code !== accessCode) {
-    return new Response(JSON.stringify({ success: false, message: '访问码错误' }), {
-      status: 401,
+  try {
+    const body = await request.json();
+    const accessCode = env.ACCESS_CODE || 'admin';
+    
+    if (body.code !== accessCode) {
+      return new Response(JSON.stringify({ success: false, message: '访问码错误' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const token = await hashString(accessCode);
+    
+    return new Response(JSON.stringify({ success: true, token }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ success: false, message: '请求格式错误' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
-  
-  // 生成简单 token
-  const token = await hashString(accessCode);
-  
-  return new Response(JSON.stringify({ success: true, token }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
 }
 
 export async function onRequestGet(context) {
-  // 验证 token 有效性
   const { request, env } = context;
   const authHeader = request.headers.get('Authorization');
   
