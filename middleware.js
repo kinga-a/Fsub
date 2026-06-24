@@ -113,7 +113,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
   <div class="login-box">
     <div class="brand-icon">🔔</div>
     <h1>RenewHelper</h1>
-    <div class="subtitle">时序 · 守望</div>
+
     <div class="input-group">
       <label>访问码</label>
       <input type="password" id="code" placeholder="请输入访问码" autofocus>
