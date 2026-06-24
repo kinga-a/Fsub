@@ -1,6 +1,6 @@
 export async function onRequestGet(context) {
   try {
-    const data = await SUB_KV.get('subscriptions', 'json') || [];
+    const data = await context.env.SUB_KV.get('subscriptions', 'json') || [];
     return json(data);
   } catch (e) {
     return json({ error: 'KV 读取失败: ' + e.message }, 500);
@@ -8,7 +8,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
   const body = await request.json();
 
   if (!body.name || !body.startDate || !body.nextDate) {
@@ -21,7 +21,7 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const data = await SUB_KV.get('subscriptions', 'json') || [];
+    const data = await env.SUB_KV.get('subscriptions', 'json') || [];
 
     const newSub = {
       id: generateId(),
@@ -50,7 +50,7 @@ export async function onRequestPost(context) {
     };
 
     data.push(newSub);
-    await SUB_KV.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
 
     return json(newSub, 201);
   } catch (e) {

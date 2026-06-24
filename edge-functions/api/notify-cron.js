@@ -1,9 +1,9 @@
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
 
   // 验证 Cron 密钥（防止被恶意调用）
   const authHeader = request.headers.get('Authorization') || '';
-  const cronToken = typeof env !== 'undefined' ? (env.CRON_TOKEN || 'your-cron-secret') : 'your-cron-secret';
+  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
   if (!authHeader.includes(cronToken)) {
     return json({ error: 'Unauthorized' }, 401);
   }
