@@ -70,7 +70,7 @@ export async function onRequestPut(context) {
     }
 
     let testMsg = {
-      title: '🔔 RenewHelper - 测试通知',
+      title: '🔔 订阅管理中心 - 测试通知',
       content: '这是一条测试通知消息，如果你收到说明配置正确！'
     };
 
@@ -109,57 +109,177 @@ export async function onRequestPut(context) {
   }
 }
 
-async function sendDingTalk(config, msg) {
-  const timestamp = Date.now();
-  const sign = await generateDingSign(timestamp, config.secret);
-  const url = config.webhook + (config.secret ? `&timestamp=${timestamp}&sign=${sign}` : '');
+// ========== Cron 定时通知（供 notify-cron 调用）==========
+export async function onRequestPost(context) {
+  const { request, env } = context;
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      msgtype: 'markdown',
-      markdown: { title: msg.title, text: `### ${msg.title}\n${msg.content}` }
-    })
-  });
-  return await res.json();
+  // 验证 Cron 密钥（防止被恶意调用）
+  const authHeader = request.headers.get('Authorization') || '';
+  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
+  if (!authHeader.includes(cronToken)) {
+    return json({ error: 'Unauthorized' }, 401);
+  }
+
+  try {
+    const subs = await SUB_KV.get('subscriptions', 'json') || [];
+    const config = await SUB_KV.get('notify_config', 'json') || {};
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    let sent = 0;
+    let skipped = 0;
+    const results = [];
+
+    for (const sub of subs) {
+      if (sub.enabled === false) {
+        skipped++;
+        continue;
+      }
+
+      const nextDate = new Date(sub.nextDate);
+      const notifyDays = sub.notifyDays || 3;
+      const notifyDate = new Date(nextDate);
+      notifyDate.setDate(notifyDate.getDate() - notifyDays);
+
+      const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+      const notifyDateStart = new Date(notifyDate); notifyDateStart.setHours(0,0,0,0);
+
+      // 今天是否在提醒窗口内（notifyDate <= today <= nextDate）
+      if (todayStart < notifyDateStart || todayStart > nextDate) {
+        skipped++;
+        continue;
+      }
+
+      // 时间匹配：允许前后5分钟容错（与之前版本一致）
+      const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
+      if (currentHour !== notifyHour || currentMinute > 5) {
+        skipped++;
+        continue;
+      }
+
+      // 检查今天是否已经通知过
+      const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
+      const alreadyNotified = await SUB_KV.get(todayKey);
+      if (alreadyNotified) {
+        skipped++;
+        continue;
+      }
+
+      const msg = {
+        title: `🔔 ${sub.name} 即将到期`,
+        content: `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`
+      };
+
+      // 兼容新旧字段：优先使用 notifyChannels 数组，否则回退到旧布尔字段
+      let channels = [];
+      if (sub.notifyChannels && Array.isArray(sub.notifyChannels) && sub.notifyChannels.length > 0) {
+        channels = sub.notifyChannels;
+      } else {
+        // 回退到旧版布尔字段
+        if (sub.notifyDingtalk) channels.push('dingtalk');
+        if (sub.notifyFeishu) channels.push('feishu');
+        if (sub.notifyWecom) channels.push('wecom');
+        if (sub.notifyEmail) channels.push('email');
+      }
+
+      // 如果没有指定渠道，默认使用所有已启用的渠道
+      const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
+      const channelResults = [];
+
+      for (const ch of targetChannels) {
+        if (ch === 'dingtalk' && config.dingtalk?.enabled) {
+          channelResults.push(await sendDingTalk(config.dingtalk, msg));
+        }
+        if (ch === 'feishu' && config.feishu?.enabled) {
+          channelResults.push(await sendFeishu(config.feishu, msg));
+        }
+        if (ch === 'wecom' && config.wecom?.enabled) {
+          channelResults.push(await sendWecom(config.wecom, msg));
+        }
+        if (ch === 'email' && config.email?.enabled) {
+          channelResults.push(await sendEmail(config.email, msg));
+        }
+      }
+
+      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
+      sent++;
+      results.push({
+        sub: sub.name,
+        channels: channelResults
+      });
+    }
+
+    return json({ success: true, sent, skipped, checked: subs.length, results });
+  } catch (e) {
+    return json({ error: e.message }, 500);
+  }
+}
+
+// ========== 通知发送函数 ==========
+async function sendDingTalk(config, msg) {
+  try {
+    const timestamp = Date.now();
+    const sign = await generateDingSign(timestamp, config.secret);
+    const url = config.webhook + (config.secret ? `&timestamp=${timestamp}&sign=${sign}` : '');
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        msgtype: 'markdown',
+        markdown: { title: msg.title, text: `### ${msg.title}\n${msg.content}` }
+      })
+    });
+    return { channel: 'dingtalk', success: res.ok, result: await res.json() };
+  } catch (e) {
+    return { channel: 'dingtalk', success: false, error: e.message };
+  }
 }
 
 async function sendFeishu(config, msg) {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const sign = await generateFeishuSign(timestamp, config.secret);
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const sign = await generateFeishuSign(timestamp, config.secret);
 
-  const res = await fetch(config.webhook, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      msg_type: 'interactive',
-      card: {
-        header: { title: { tag: 'plain_text', content: msg.title } },
-        elements: [{ tag: 'div', text: { tag: 'lark_md', content: msg.content } }]
-      },
-      timestamp: timestamp.toString(),
-      sign: sign
-    })
-  });
-  return await res.json();
+    const res = await fetch(config.webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        msg_type: 'interactive',
+        card: {
+          header: { title: { tag: 'plain_text', content: msg.title } },
+          elements: [{ tag: 'div', text: { tag: 'lark_md', content: msg.content } }]
+        },
+        timestamp: timestamp.toString(),
+        sign: sign
+      })
+    });
+    return { channel: 'feishu', success: res.ok, result: await res.json() };
+  } catch (e) {
+    return { channel: 'feishu', success: false, error: e.message };
+  }
 }
 
 async function sendWecom(config, msg) {
-  const url = config.webhook || `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${config.key}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      msgtype: 'markdown',
-      markdown: { content: `**${msg.title}**\n${msg.content}` }
-    })
-  });
-  return await res.json();
+  try {
+    const url = config.webhook || `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=${config.key}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        msgtype: 'markdown',
+        markdown: { content: `**${msg.title}**\n${msg.content}` }
+      })
+    });
+    return { channel: 'wecom', success: res.ok, result: await res.json() };
+  } catch (e) {
+    return { channel: 'wecom', success: false, error: e.message };
+  }
 }
 
 async function sendEmail(config, msg) {
-  return { message: '邮件发送功能需要在 Cloud Functions 中实现', config: { to: config.to } };
+  return { channel: 'email', success: false, message: '邮件发送功能需要在 Cloud Functions 中实现', config: { to: config.to } };
 }
 
 async function generateDingSign(timestamp, secret) {
