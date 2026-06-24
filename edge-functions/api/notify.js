@@ -1,6 +1,7 @@
 export async function onRequestGet(context) {
+  const { env } = context;
   try {
-    const config = await SUB_KV.get('notify_config', 'json') || {
+    const config = await env.SUB_KV.get('notify_config', 'json') || {
       dingtalk: { enabled: false, webhook: '', secret: '' },
       feishu: { enabled: false, webhook: '', secret: '' },
       wecom: { enabled: false, webhook: '', key: '' },
@@ -19,12 +20,12 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request } = context;
-  
+  const { request, env } = context;
+
   try {
     const body = await request.json();
-    const existing = await SUB_KV.get('notify_config', 'json') || {};
-    
+    const existing = await env.SUB_KV.get('notify_config', 'json') || {};
+
     const config = {
       dingtalk: {
         enabled: body.dingtalk?.enabled || false,
@@ -50,8 +51,8 @@ export async function onRequestPost(context) {
         to: body.email?.to || existing.email?.to || ''
       }
     };
-    
-    await SUB_KV.put('notify_config', JSON.stringify(config));
+
+    await env.SUB_KV.put('notify_config', JSON.stringify(config));
     return json({ success: true });
   } catch (e) {
     return json({ error: '保存失败: ' + e.message }, 500);
@@ -59,21 +60,33 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestPut(context) {
-  const { request } = context;
-  
+  const { request, env } = context;
+
   try {
-    const { type } = await request.json();
-    const config = await SUB_KV.get('notify_config', 'json');
-    
+    const { type, subId } = await request.json();
+    const config = await env.SUB_KV.get('notify_config', 'json');
+
     if (!config || !config[type]?.enabled) {
       return json({ error: '该通知渠道未启用' }, 400);
     }
-    
-    const testMsg = {
-      title: '🔔 订阅管理中心 - 测试通知',
+
+    let testMsg = {
+      title: '🔔 RenewHelper - 测试通知',
       content: '这是一条测试通知消息，如果你收到说明配置正确！'
     };
-    
+
+    // 如果指定了订阅ID，使用订阅信息生成测试消息
+    if (subId) {
+      const subs = await env.SUB_KV.get('subscriptions', 'json') || [];
+      const sub = subs.find(s => s.id === subId);
+      if (sub) {
+        testMsg = {
+          title: `🔔 ${sub.name} - 测试通知`,
+          content: `服务：**${sub.name}**\n到期日：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n这是一条手动测试通知。`
+        };
+      }
+    }
+
     let result;
     switch (type) {
       case 'dingtalk':
@@ -91,7 +104,7 @@ export async function onRequestPut(context) {
       default:
         return json({ error: '未知的通知类型' }, 400);
     }
-    
+
     return json({ success: true, result });
   } catch (e) {
     return json({ error: '发送失败: ' + e.message }, 500);
@@ -102,7 +115,7 @@ async function sendDingTalk(config, msg) {
   const timestamp = Date.now();
   const sign = await generateDingSign(timestamp, config.secret);
   const url = config.webhook + (config.secret ? `&timestamp=${timestamp}&sign=${sign}` : '');
-  
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -117,7 +130,7 @@ async function sendDingTalk(config, msg) {
 async function sendFeishu(config, msg) {
   const timestamp = Math.floor(Date.now() / 1000);
   const sign = await generateFeishuSign(timestamp, config.secret);
-  
+
   const res = await fetch(config.webhook, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
