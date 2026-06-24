@@ -1,9 +1,9 @@
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
   const body = await request.json();
 
-  // 环境变量通过 env 访问（EdgeOne Pages 使用 context.env）
-  const accessCode = env.ACCESS_CODE || 'admin';
+  // EdgeOne Pages KV绑定后，环境变量通过全局 env 访问
+  const accessCode = typeof env !== 'undefined' ? (env.ACCESS_CODE || 'admin') : 'admin';
 
   if (body.code === accessCode) {
     const token = await hashString(accessCode + '_salt_' + Date.now());

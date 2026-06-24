@@ -1,16 +1,16 @@
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
 
   // 验证 Cron 密钥（防止被恶意调用）
   const authHeader = request.headers.get('Authorization') || '';
-  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
+  const cronToken = typeof env !== 'undefined' ? (env.CRON_TOKEN || 'your-cron-secret') : 'your-cron-secret';
   if (!authHeader.includes(cronToken)) {
     return json({ error: 'Unauthorized' }, 401);
   }
 
   try {
-    const subs = await env.SUB_KV.get('subscriptions', 'json') || [];
-    const config = await env.SUB_KV.get('notify_config', 'json') || {};
+    const subs = await SUB_KV.get('subscriptions', 'json') || [];
+    const config = await SUB_KV.get('notify_config', 'json') || {};
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
@@ -48,7 +48,7 @@ export async function onRequestPost(context) {
 
       // 检查今天是否已经发送过（避免重复）
       const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
-      const alreadyNotified = await env.SUB_KV.get(todayKey);
+      const alreadyNotified = await SUB_KV.get(todayKey);
       if (alreadyNotified) {
         skipped++;
         continue;
@@ -82,7 +82,7 @@ export async function onRequestPost(context) {
       }
 
       // 标记今天已通知
-      await env.SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
+      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
       sent++;
     }
 
