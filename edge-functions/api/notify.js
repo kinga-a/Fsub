@@ -19,8 +19,15 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
+  const url = new URL(request.url);
 
+  // 根据路径判断：/api/notify-cron 是定时任务，/api/notify 是保存配置
+  if (url.pathname === '/api/notify-cron' || url.pathname.endsWith('/notify-cron')) {
+    return handleCron(context);
+  }
+
+  // 保存配置
   try {
     const body = await request.json();
     const existing = await SUB_KV.get('notify_config', 'json') || {};
@@ -109,8 +116,8 @@ export async function onRequestPut(context) {
   }
 }
 
-// ========== Cron 定时通知（供 notify-cron 调用）==========
-export async function onRequestPost(context) {
+// ========== Cron 定时通知 ==========
+async function handleCron(context) {
   const { request, env } = context;
 
   // 验证 Cron 密钥（防止被恶意调用）
@@ -151,7 +158,7 @@ export async function onRequestPost(context) {
         continue;
       }
 
-      // 时间匹配：允许前后5分钟容错（与之前版本一致）
+      // 时间匹配：允许前后5分钟容错（与之前可用版本一致）
       const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
       if (currentHour !== notifyHour || currentMinute > 5) {
         skipped++;
@@ -176,14 +183,12 @@ export async function onRequestPost(context) {
       if (sub.notifyChannels && Array.isArray(sub.notifyChannels) && sub.notifyChannels.length > 0) {
         channels = sub.notifyChannels;
       } else {
-        // 回退到旧版布尔字段
         if (sub.notifyDingtalk) channels.push('dingtalk');
         if (sub.notifyFeishu) channels.push('feishu');
         if (sub.notifyWecom) channels.push('wecom');
         if (sub.notifyEmail) channels.push('email');
       }
 
-      // 如果没有指定渠道，默认使用所有已启用的渠道
       const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
       const channelResults = [];
 
