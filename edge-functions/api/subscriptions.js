@@ -1,6 +1,37 @@
+// KV 访问辅助函数 - 兼容全局变量和 context.env 两种方式
+function getKV(context) {
+  // 方式1：全局变量（EdgeOne Pages 绑定后注入）
+  if (typeof SUB_KV !== 'undefined') {
+    return SUB_KV;
+  }
+  // 方式2：通过 context.env 访问
+  if (context && context.env && context.env.SUB_KV) {
+    return context.env.SUB_KV;
+  }
+  // 方式3：通过全局 env 访问（某些环境）
+  if (typeof env !== 'undefined' && env.SUB_KV) {
+    return env.SUB_KV;
+  }
+  throw new Error('SUB_KV 未定义，请检查 KV 命名空间是否已绑定到项目');
+}
+
+// 环境变量访问辅助函数
+function getEnv(context, key, defaultValue) {
+  // 方式1：通过 context.env 访问
+  if (context && context.env && context.env[key] !== undefined) {
+    return context.env[key];
+  }
+  // 方式2：全局变量
+  if (typeof env !== 'undefined' && env[key] !== undefined) {
+    return env[key];
+  }
+  return defaultValue;
+}
+
 export async function onRequestGet(context) {
   try {
-    const data = await SUB_KV.get('subscriptions', 'json') || [];
+    const kv = getKV(context);
+    const data = await kv.get('subscriptions', 'json') || [];
     return json(data);
   } catch (e) {
     return json({ error: 'KV 读取失败: ' + e.message }, 500);
@@ -8,7 +39,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
   const body = await request.json();
 
   if (!body.name || !body.startDate || !body.nextDate) {
@@ -21,7 +52,8 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const data = await env.SUB_KV.get('subscriptions', 'json') || [];
+    const kv = getKV(context);
+    const data = await kv.get('subscriptions', 'json') || [];
 
     const newSub = {
       id: generateId(),
@@ -50,7 +82,7 @@ export async function onRequestPost(context) {
     };
 
     data.push(newSub);
-    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
+    await kv.put('subscriptions', JSON.stringify(data));
 
     return json(newSub, 201);
   } catch (e) {

@@ -1,16 +1,42 @@
-export async function onRequestPost(context) {
-  const { request, env } = context;
+// KV 访问辅助函数 - 兼容全局变量和 context.env 两种方式
+function getKV(context) {
+  if (typeof SUB_KV !== 'undefined') {
+    return SUB_KV;
+  }
+  if (context && context.env && context.env.SUB_KV) {
+    return context.env.SUB_KV;
+  }
+  if (typeof env !== 'undefined' && env.SUB_KV) {
+    return env.SUB_KV;
+  }
+  throw new Error('SUB_KV 未定义，请检查 KV 命名空间是否已绑定到项目');
+}
 
-  // 验证 Cron 密钥（防止被恶意调用）
+// 环境变量访问辅助函数
+function getEnv(context, key, defaultValue) {
+  if (context && context.env && context.env[key] !== undefined) {
+    return context.env[key];
+  }
+  if (typeof env !== 'undefined' && env[key] !== undefined) {
+    return env[key];
+  }
+  return defaultValue;
+}
+
+export async function onRequestPost(context) {
+  const { request } = context;
+
+  // 验证 Cron 密钥
   const authHeader = request.headers.get('Authorization') || '';
-  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
+  const cronToken = getEnv(context, 'CRON_TOKEN', 'your-cron-secret');
   if (!authHeader.includes(cronToken)) {
     return json({ error: 'Unauthorized' }, 401);
   }
 
   try {
-    const subs = await SUB_KV.get('subscriptions', 'json') || [];
-    const config = await SUB_KV.get('notify_config', 'json') || {};
+    const kv = getKV(context);
+    const subs = await kv.get('subscriptions', 'json') || [];
+    const config = await kv.get('notify_config', 'json') || {};
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
@@ -19,18 +45,15 @@ export async function onRequestPost(context) {
     let skipped = 0;
 
     for (const sub of subs) {
-      // 跳过已停用的订阅
       if (sub.enabled === false) {
         skipped++;
         continue;
       }
 
-      // 检查是否需要通知
       const nextDate = new Date(sub.nextDate);
       const notifyDate = new Date(nextDate);
       notifyDate.setDate(notifyDate.getDate() - (sub.notifyDays || 3));
 
-      // 检查是否到了通知日期范围
       const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
       const notifyDateStart = new Date(notifyDate); notifyDateStart.setHours(0,0,0,0);
 
@@ -39,31 +62,31 @@ export async function onRequestPost(context) {
         continue;
       }
 
-      // 检查是否到了通知时间（小时:分钟）
       const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
       if (currentHour !== notifyHour || currentMinute > 5) {
         skipped++;
         continue;
       }
 
-      // 检查今天是否已经发送过（避免重复）
       const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
-      const alreadyNotified = await SUB_KV.get(todayKey);
+      const alreadyNotified = await kv.get(todayKey);
       if (alreadyNotified) {
         skipped++;
         continue;
       }
 
-      // 发送通知
       const msg = {
         title: `🔔 ${sub.name} 即将到期`,
-        content: `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`
+        content: `服务：**${sub.name}**
+类型：**${sub.type || '未分类'}**
+下次到期：**${sub.nextDate}**
+价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}
+
+请及时处理或续费！`
       };
 
       const channels = sub.notifyChannels || [];
       const results = [];
-
-      // 如果没有指定渠道，默认发送到所有已启用的渠道
       const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
 
       for (const ch of targetChannels) {
@@ -81,8 +104,7 @@ export async function onRequestPost(context) {
         }
       }
 
-      // 标记今天已通知
-      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
+      await kv.put(todayKey, '1', { expirationTtl: 86400 });
       sent++;
     }
 
@@ -103,7 +125,8 @@ async function sendDingTalk(config, msg) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         msgtype: 'markdown',
-        markdown: { title: msg.title, text: `### ${msg.title}\n${msg.content}` }
+        markdown: { title: msg.title, text: `### ${msg.title}
+${msg.content}` }
       })
     });
     return { channel: 'dingtalk', success: res.ok, result: await res.json() };
@@ -144,7 +167,8 @@ async function sendWecom(config, msg) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         msgtype: 'markdown',
-        markdown: { content: `**${msg.title}**\n${msg.content}` }
+        markdown: { content: `**${msg.title}**
+${msg.content}` }
       })
     });
     return { channel: 'wecom', success: res.ok, result: await res.json() };
@@ -159,7 +183,8 @@ async function sendEmail(config, msg) {
 
 async function generateDingSign(timestamp, secret) {
   if (!secret) return '';
-  const str = timestamp + '\n' + secret;
+  const str = timestamp + '
+' + secret;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
@@ -170,7 +195,8 @@ async function generateDingSign(timestamp, secret) {
 
 async function generateFeishuSign(timestamp, secret) {
   if (!secret) return '';
-  const str = timestamp + '\n' + secret;
+  const str = timestamp + '
+' + secret;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
