@@ -2,22 +2,18 @@ export function middleware(context) {
   const { request, next } = context;
   const url = new URL(request.url);
 
-  // 静态资源放行
   if (url.pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
     return next();
   }
 
-  // API 请求直接放行（由 Edge Functions 处理认证）
   if (url.pathname.startsWith('/api/')) {
     return next();
   }
 
-  // 检查 Cookie 中的 token
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/sub_token=([^;]+)/);
 
   if (!tokenMatch) {
-    // 未登录，返回登录页
     return new Response(LOGIN_HTML, {
       headers: { 
         'Content-Type': 'text/html; charset=utf-8',
@@ -26,11 +22,9 @@ export function middleware(context) {
     });
   }
 
-  // 已登录，继续处理（返回 index.html）
   return next();
 }
 
-// 配置匹配器（可选，默认匹配所有路由）
 export const config = {
   matcher: ['/:path*'],
 };
