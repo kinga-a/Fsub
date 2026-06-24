@@ -1,6 +1,6 @@
 export async function onRequestGet(context) {
   try {
-    const config = await context.env.SUB_KV.get('notify_config', 'json') || {
+    const config = await SUB_KV.get('notify_config', 'json') || {
       dingtalk: { enabled: false, webhook: '', secret: '' },
       feishu: { enabled: false, webhook: '', secret: '' },
       wecom: { enabled: false, webhook: '', key: '' },
@@ -19,11 +19,11 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
 
   try {
     const body = await request.json();
-    const existing = await env.SUB_KV.get('notify_config', 'json') || {};
+    const existing = await SUB_KV.get('notify_config', 'json') || {};
 
     const config = {
       dingtalk: {
@@ -51,7 +51,7 @@ export async function onRequestPost(context) {
       }
     };
 
-    await env.SUB_KV.put('notify_config', JSON.stringify(config));
+    await SUB_KV.put('notify_config', JSON.stringify(config));
     return json({ success: true });
   } catch (e) {
     return json({ error: '保存失败: ' + e.message }, 500);
@@ -59,11 +59,11 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestPut(context) {
-  const { request, env } = context;
+  const { request } = context;
 
   try {
     const { type, subId } = await request.json();
-    const config = await env.SUB_KV.get('notify_config', 'json');
+    const config = await SUB_KV.get('notify_config', 'json');
 
     if (!config || !config[type]?.enabled) {
       return json({ error: '该通知渠道未启用' }, 400);
@@ -75,7 +75,7 @@ export async function onRequestPut(context) {
     };
 
     if (subId) {
-      const subs = await env.SUB_KV.get('subscriptions', 'json') || [];
+      const subs = await SUB_KV.get('subscriptions', 'json') || [];
       const sub = subs.find(s => s.id === subId);
       if (sub) {
         testMsg = {

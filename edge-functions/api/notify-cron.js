@@ -8,8 +8,8 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const subs = await env.SUB_KV.get('subscriptions', 'json') || [];
-    const config = await env.SUB_KV.get('notify_config', 'json') || {};
+    const subs = await SUB_KV.get('subscriptions', 'json') || [];
+    const config = await SUB_KV.get('notify_config', 'json') || {};
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
@@ -42,7 +42,7 @@ export async function onRequestPost(context) {
       }
 
       const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
-      const alreadyNotified = await env.SUB_KV.get(todayKey);
+      const alreadyNotified = await SUB_KV.get(todayKey);
       if (alreadyNotified) {
         skipped++;
         continue;
@@ -72,7 +72,7 @@ export async function onRequestPost(context) {
         }
       }
 
-      await env.SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
+      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
       sent++;
     }
 

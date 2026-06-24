@@ -1,5 +1,5 @@
 export async function onRequestPut(context) {
-  const { request, env } = context;
+  const { request } = context;
 
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -20,7 +20,7 @@ export async function onRequestPut(context) {
       body.price = price;
     }
 
-    let data = await env.SUB_KV.get('subscriptions', 'json') || [];
+    let data = await SUB_KV.get('subscriptions', 'json') || [];
     const index = data.findIndex(s => s.id === id);
 
     if (index === -1) {
@@ -41,7 +41,7 @@ export async function onRequestPut(context) {
       updatedAt: new Date().toISOString()
     };
 
-    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
     return json(data[index]);
   } catch (e) {
     return json({ error: '更新失败: ' + e.message }, 500);
@@ -49,7 +49,7 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
-  const { request, env } = context;
+  const { request } = context;
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
@@ -59,7 +59,7 @@ export async function onRequestDelete(context) {
   }
 
   try {
-    let data = await env.SUB_KV.get('subscriptions', 'json') || [];
+    let data = await SUB_KV.get('subscriptions', 'json') || [];
     const originalLength = data.length;
     data = data.filter(s => s.id !== id);
 
@@ -67,7 +67,7 @@ export async function onRequestDelete(context) {
       return json({ error: '订阅不存在' }, 404);
     }
 
-    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
     return json({ success: true });
   } catch (e) {
     return json({ error: '删除失败: ' + e.message }, 500);
@@ -75,7 +75,7 @@ export async function onRequestDelete(context) {
 }
 
 export async function onRequestPatch(context) {
-  const { request, env } = context;
+  const { request } = context;
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
@@ -85,7 +85,7 @@ export async function onRequestPatch(context) {
   }
 
   try {
-    let data = await env.SUB_KV.get('subscriptions', 'json') || [];
+    let data = await SUB_KV.get('subscriptions', 'json') || [];
     const index = data.findIndex(s => s.id === id);
 
     if (index === -1) {
@@ -107,7 +107,7 @@ export async function onRequestPatch(context) {
       updatedAt: new Date().toISOString()
     };
 
-    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
     return json({ success: true, nextDate: newNextDate, sub: data[index] });
   } catch (e) {
     return json({ error: '续订失败: ' + e.message }, 500);
