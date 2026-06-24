@@ -116,24 +116,15 @@ export async function onRequestPatch(context) {
 
 function calcNextDate(baseDate, cycleValue, cycleUnit) {
   const base = new Date(baseDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   let next = new Date(base);
 
-  if (next > today) {
-    return next.toISOString().split('T')[0];
-  }
-
-  while (next <= today) {
-    switch(cycleUnit) {
-      case 'day': next.setDate(next.getDate() + cycleValue); break;
-      case 'week': next.setDate(next.getDate() + (cycleValue * 7)); break;
-      case 'month': next.setMonth(next.getMonth() + cycleValue); break;
-      case 'quarter': next.setMonth(next.getMonth() + (cycleValue * 3)); break;
-      case 'year': next.setFullYear(next.getFullYear() + cycleValue); break;
-      default: next.setMonth(next.getMonth() + cycleValue);
-    }
+  switch(cycleUnit) {
+    case 'day': next.setDate(next.getDate() + cycleValue); break;
+    case 'week': next.setDate(next.getDate() + (cycleValue * 7)); break;
+    case 'month': next.setMonth(next.getMonth() + cycleValue); break;
+    case 'quarter': next.setMonth(next.getMonth() + (cycleValue * 3)); break;
+    case 'year': next.setFullYear(next.getFullYear() + cycleValue); break;
+    default: next.setMonth(next.getMonth() + cycleValue);
   }
   return next.toISOString().split('T')[0];
 }
