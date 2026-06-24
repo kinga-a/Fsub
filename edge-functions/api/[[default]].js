@@ -1,19 +1,5 @@
-// KV 访问辅助函数 - 兼容全局变量和 context.env 两种方式
-function getKV(context) {
-  if (typeof SUB_KV !== 'undefined') {
-    return SUB_KV;
-  }
-  if (context && context.env && context.env.SUB_KV) {
-    return context.env.SUB_KV;
-  }
-  if (typeof env !== 'undefined' && env.SUB_KV) {
-    return env.SUB_KV;
-  }
-  throw new Error('SUB_KV 未定义，请检查 KV 命名空间是否已绑定到项目');
-}
-
 export async function onRequestPut(context) {
-  const { request } = context;
+  const { request, env } = context;
 
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
@@ -34,8 +20,7 @@ export async function onRequestPut(context) {
       body.price = price;
     }
 
-    const kv = getKV(context);
-    let data = await kv.get('subscriptions', 'json') || [];
+    let data = await env.SUB_KV.get('subscriptions', 'json') || [];
     const index = data.findIndex(s => s.id === id);
 
     if (index === -1) {
@@ -56,7 +41,7 @@ export async function onRequestPut(context) {
       updatedAt: new Date().toISOString()
     };
 
-    await kv.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
     return json(data[index]);
   } catch (e) {
     return json({ error: '更新失败: ' + e.message }, 500);
@@ -64,7 +49,7 @@ export async function onRequestPut(context) {
 }
 
 export async function onRequestDelete(context) {
-  const { request } = context;
+  const { request, env } = context;
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
@@ -74,8 +59,7 @@ export async function onRequestDelete(context) {
   }
 
   try {
-    const kv = getKV(context);
-    let data = await kv.get('subscriptions', 'json') || [];
+    let data = await env.SUB_KV.get('subscriptions', 'json') || [];
     const originalLength = data.length;
     data = data.filter(s => s.id !== id);
 
@@ -83,7 +67,7 @@ export async function onRequestDelete(context) {
       return json({ error: '订阅不存在' }, 404);
     }
 
-    await kv.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
     return json({ success: true });
   } catch (e) {
     return json({ error: '删除失败: ' + e.message }, 500);
@@ -91,7 +75,7 @@ export async function onRequestDelete(context) {
 }
 
 export async function onRequestPatch(context) {
-  const { request } = context;
+  const { request, env } = context;
   const url = new URL(request.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
@@ -101,8 +85,7 @@ export async function onRequestPatch(context) {
   }
 
   try {
-    const kv = getKV(context);
-    let data = await kv.get('subscriptions', 'json') || [];
+    let data = await env.SUB_KV.get('subscriptions', 'json') || [];
     const index = data.findIndex(s => s.id === id);
 
     if (index === -1) {
@@ -124,7 +107,7 @@ export async function onRequestPatch(context) {
       updatedAt: new Date().toISOString()
     };
 
-    await kv.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
     return json({ success: true, nextDate: newNextDate, sub: data[index] });
   } catch (e) {
     return json({ error: '续订失败: ' + e.message }, 500);

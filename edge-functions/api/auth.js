@@ -1,19 +1,8 @@
-// 环境变量访问辅助函数
-function getEnv(context, key, defaultValue) {
-  if (context && context.env && context.env[key] !== undefined) {
-    return context.env[key];
-  }
-  if (typeof env !== 'undefined' && env[key] !== undefined) {
-    return env[key];
-  }
-  return defaultValue;
-}
-
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
   const body = await request.json();
 
-  const accessCode = getEnv(context, 'ACCESS_CODE', 'admin');
+  const accessCode = env.ACCESS_CODE || 'admin';
 
   if (body.code === accessCode) {
     const token = await hashString(accessCode + '_salt_' + Date.now());

@@ -1,21 +1,6 @@
-// KV 访问辅助函数 - 兼容全局变量和 context.env 两种方式
-function getKV(context) {
-  if (typeof SUB_KV !== 'undefined') {
-    return SUB_KV;
-  }
-  if (context && context.env && context.env.SUB_KV) {
-    return context.env.SUB_KV;
-  }
-  if (typeof env !== 'undefined' && env.SUB_KV) {
-    return env.SUB_KV;
-  }
-  throw new Error('SUB_KV 未定义，请检查 KV 命名空间是否已绑定到项目');
-}
-
 export async function onRequestGet(context) {
   try {
-    const kv = getKV(context);
-    const config = await kv.get('notify_config', 'json') || {
+    const config = await context.env.SUB_KV.get('notify_config', 'json') || {
       dingtalk: { enabled: false, webhook: '', secret: '' },
       feishu: { enabled: false, webhook: '', secret: '' },
       wecom: { enabled: false, webhook: '', key: '' },
@@ -34,12 +19,11 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
 
   try {
     const body = await request.json();
-    const kv = getKV(context);
-    const existing = await kv.get('notify_config', 'json') || {};
+    const existing = await env.SUB_KV.get('notify_config', 'json') || {};
 
     const config = {
       dingtalk: {
@@ -67,7 +51,7 @@ export async function onRequestPost(context) {
       }
     };
 
-    await kv.put('notify_config', JSON.stringify(config));
+    await env.SUB_KV.put('notify_config', JSON.stringify(config));
     return json({ success: true });
   } catch (e) {
     return json({ error: '保存失败: ' + e.message }, 500);
@@ -75,12 +59,11 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestPut(context) {
-  const { request } = context;
+  const { request, env } = context;
 
   try {
     const { type, subId } = await request.json();
-    const kv = getKV(context);
-    const config = await kv.get('notify_config', 'json');
+    const config = await env.SUB_KV.get('notify_config', 'json');
 
     if (!config || !config[type]?.enabled) {
       return json({ error: '该通知渠道未启用' }, 400);
@@ -92,16 +75,12 @@ export async function onRequestPut(context) {
     };
 
     if (subId) {
-      const subs = await kv.get('subscriptions', 'json') || [];
+      const subs = await env.SUB_KV.get('subscriptions', 'json') || [];
       const sub = subs.find(s => s.id === subId);
       if (sub) {
         testMsg = {
           title: `🔔 ${sub.name} - 测试通知`,
-          content: `服务：**${sub.name}**
-到期日：**${sub.nextDate}**
-价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}
-
-这是一条手动测试通知。`
+          content: `服务：**${sub.name}**\n到期日：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n这是一条手动测试通知。`
         };
       }
     }
@@ -140,8 +119,7 @@ async function sendDingTalk(config, msg) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       msgtype: 'markdown',
-      markdown: { title: msg.title, text: `### ${msg.title}
-${msg.content}` }
+      markdown: { title: msg.title, text: `### ${msg.title}\n${msg.content}` }
     })
   });
   return await res.json();
@@ -174,8 +152,7 @@ async function sendWecom(config, msg) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       msgtype: 'markdown',
-      markdown: { content: `**${msg.title}**
-${msg.content}` }
+      markdown: { content: `**${msg.title}**\n${msg.content}` }
     })
   });
   return await res.json();
@@ -187,8 +164,7 @@ async function sendEmail(config, msg) {
 
 async function generateDingSign(timestamp, secret) {
   if (!secret) return '';
-  const str = timestamp + '
-' + secret;
+  const str = timestamp + '\n' + secret;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
@@ -199,8 +175,7 @@ async function generateDingSign(timestamp, secret) {
 
 async function generateFeishuSign(timestamp, secret) {
   if (!secret) return '';
-  const str = timestamp + '
-' + secret;
+  const str = timestamp + '\n' + secret;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']

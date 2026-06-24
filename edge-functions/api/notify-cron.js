@@ -1,42 +1,15 @@
-// KV 访问辅助函数 - 兼容全局变量和 context.env 两种方式
-function getKV(context) {
-  if (typeof SUB_KV !== 'undefined') {
-    return SUB_KV;
-  }
-  if (context && context.env && context.env.SUB_KV) {
-    return context.env.SUB_KV;
-  }
-  if (typeof env !== 'undefined' && env.SUB_KV) {
-    return env.SUB_KV;
-  }
-  throw new Error('SUB_KV 未定义，请检查 KV 命名空间是否已绑定到项目');
-}
-
-// 环境变量访问辅助函数
-function getEnv(context, key, defaultValue) {
-  if (context && context.env && context.env[key] !== undefined) {
-    return context.env[key];
-  }
-  if (typeof env !== 'undefined' && env[key] !== undefined) {
-    return env[key];
-  }
-  return defaultValue;
-}
-
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
 
-  // 验证 Cron 密钥
   const authHeader = request.headers.get('Authorization') || '';
-  const cronToken = getEnv(context, 'CRON_TOKEN', 'your-cron-secret');
+  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
   if (!authHeader.includes(cronToken)) {
     return json({ error: 'Unauthorized' }, 401);
   }
 
   try {
-    const kv = getKV(context);
-    const subs = await kv.get('subscriptions', 'json') || [];
-    const config = await kv.get('notify_config', 'json') || {};
+    const subs = await env.SUB_KV.get('subscriptions', 'json') || [];
+    const config = await env.SUB_KV.get('notify_config', 'json') || {};
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
@@ -69,7 +42,7 @@ export async function onRequestPost(context) {
       }
 
       const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
-      const alreadyNotified = await kv.get(todayKey);
+      const alreadyNotified = await env.SUB_KV.get(todayKey);
       if (alreadyNotified) {
         skipped++;
         continue;
@@ -77,12 +50,7 @@ export async function onRequestPost(context) {
 
       const msg = {
         title: `🔔 ${sub.name} 即将到期`,
-        content: `服务：**${sub.name}**
-类型：**${sub.type || '未分类'}**
-下次到期：**${sub.nextDate}**
-价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}
-
-请及时处理或续费！`
+        content: `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`
       };
 
       const channels = sub.notifyChannels || [];
@@ -104,7 +72,7 @@ export async function onRequestPost(context) {
         }
       }
 
-      await kv.put(todayKey, '1', { expirationTtl: 86400 });
+      await env.SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
       sent++;
     }
 
@@ -125,8 +93,7 @@ async function sendDingTalk(config, msg) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         msgtype: 'markdown',
-        markdown: { title: msg.title, text: `### ${msg.title}
-${msg.content}` }
+        markdown: { title: msg.title, text: `### ${msg.title}\n${msg.content}` }
       })
     });
     return { channel: 'dingtalk', success: res.ok, result: await res.json() };
@@ -167,8 +134,7 @@ async function sendWecom(config, msg) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         msgtype: 'markdown',
-        markdown: { content: `**${msg.title}**
-${msg.content}` }
+        markdown: { content: `**${msg.title}**\n${msg.content}` }
       })
     });
     return { channel: 'wecom', success: res.ok, result: await res.json() };
@@ -183,8 +149,7 @@ async function sendEmail(config, msg) {
 
 async function generateDingSign(timestamp, secret) {
   if (!secret) return '';
-  const str = timestamp + '
-' + secret;
+  const str = timestamp + '\n' + secret;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
@@ -195,8 +160,7 @@ async function generateDingSign(timestamp, secret) {
 
 async function generateFeishuSign(timestamp, secret) {
   if (!secret) return '';
-  const str = timestamp + '
-' + secret;
+  const str = timestamp + '\n' + secret;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
