@@ -3,7 +3,9 @@ export async function onRequestPost(context) {
 
   const authHeader = request.headers.get('Authorization') || '';
   const cronToken = env.CRON_TOKEN || 'your-cron-secret';
-  if (!authHeader.includes(cronToken)) {
+  const expectedToken = 'Bearer ' + cronToken;
+
+  if (authHeader !== expectedToken) {
     return json({ error: 'Unauthorized' }, 401);
   }
 
@@ -16,6 +18,7 @@ export async function onRequestPost(context) {
 
     let sent = 0;
     let skipped = 0;
+    const results = [];
 
     for (const sub of subs) {
       if (sub.enabled === false) {
@@ -24,23 +27,31 @@ export async function onRequestPost(context) {
       }
 
       const nextDate = new Date(sub.nextDate);
+      const notifyDays = sub.notifyDays || 3;
       const notifyDate = new Date(nextDate);
-      notifyDate.setDate(notifyDate.getDate() - (sub.notifyDays || 3));
+      notifyDate.setDate(notifyDate.getDate() - notifyDays);
 
       const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
       const notifyDateStart = new Date(notifyDate); notifyDateStart.setHours(0,0,0,0);
 
+      // 今天是否在提醒窗口内（notifyDate <= today <= nextDate）
       if (todayStart < notifyDateStart || todayStart > nextDate) {
         skipped++;
         continue;
       }
 
+      // 时间匹配：允许前后15分钟容错
       const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
-      if (currentHour !== notifyHour || currentMinute > 5) {
+      const hourDiff = Math.abs(currentHour - notifyHour);
+      const minuteDiff = hourDiff * 60 + Math.abs(currentMinute - notifyMinute);
+
+      // 如果小时不同，跳过；如果同小时但超过15分钟，跳过
+      if (hourDiff > 0 || minuteDiff > 15) {
         skipped++;
         continue;
       }
 
+      // 检查今天是否已经通知过
       const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
       const alreadyNotified = await SUB_KV.get(todayKey);
       if (alreadyNotified) {
@@ -54,29 +65,33 @@ export async function onRequestPost(context) {
       };
 
       const channels = sub.notifyChannels || [];
-      const results = [];
+      const channelResults = [];
       const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
 
       for (const ch of targetChannels) {
         if (ch === 'dingtalk' && config.dingtalk?.enabled) {
-          results.push(await sendDingTalk(config.dingtalk, msg));
+          channelResults.push(await sendDingTalk(config.dingtalk, msg));
         }
         if (ch === 'feishu' && config.feishu?.enabled) {
-          results.push(await sendFeishu(config.feishu, msg));
+          channelResults.push(await sendFeishu(config.feishu, msg));
         }
         if (ch === 'wecom' && config.wecom?.enabled) {
-          results.push(await sendWecom(config.wecom, msg));
+          channelResults.push(await sendWecom(config.wecom, msg));
         }
         if (ch === 'email' && config.email?.enabled) {
-          results.push(await sendEmail(config.email, msg));
+          channelResults.push(await sendEmail(config.email, msg));
         }
       }
 
       await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
       sent++;
+      results.push({
+        sub: sub.name,
+        channels: channelResults
+      });
     }
 
-    return json({ success: true, sent, skipped, checked: subs.length });
+    return json({ success: true, sent, skipped, checked: subs.length, results });
   } catch (e) {
     return json({ error: e.message }, 500);
   }

@@ -15,5 +15,14 @@
         { "key": "Cache-Control", "value": "no-store" }
       ]
     }
+  ],
+  "schedules": [
+    {
+      "name": "notify-cron",
+      "cron": "0 19 * * *",
+      "path": "/api/notify-cron",
+      "method": "POST",
+      "timezone": "Asia/Shanghai"
+    }
   ]
 }
