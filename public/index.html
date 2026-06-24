@@ -293,8 +293,7 @@
     .toast.success { background: var(--success); }
     .toast.error { background: var(--danger); }
     .toast.info { background: var(--info); }
-    .lunar-text { font-size: 11px; color: #8b5cf6; margin-top: 2px; }
-    .view-toggle { display: flex; background: #f8fafc; border-radius: 10px; padding: 3px; gap: 3px; }
+        .view-toggle { display: flex; background: #f8fafc; border-radius: 10px; padding: 3px; gap: 3px; }
     .view-btn {
       padding: 8px 14px; border: none; background: none; cursor: pointer;
       border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-secondary);
@@ -320,13 +319,14 @@
     }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <h1>🔔 RenewHelper</h1>
-        <div class="subtitle">时序 · 守望</div>
+
       </div>
       <nav class="nav">
         <div class="nav-item active" onclick="switchView('list')" data-view="list">
@@ -360,9 +360,6 @@
           <h2 id="pageTitle">📋 订阅列表</h2>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-secondary btn-sm" onclick="toggleLunar()">
-            <span id="lunarIcon">☾</span> <span id="lunarText">显示农历</span>
-          </button>
           <button class="btn btn-primary" onclick="openModal()">
             <span>+</span> 新增服务
           </button>
@@ -650,11 +647,6 @@
                 <option value="year">年</option>
               </select>
             </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                <input type="checkbox" id="mLunarCycle" style="width:auto;"> 农历周期
-              </label>
-            </div>
           </div>
           <div class="form-row form-row-2">
             <div class="form-group">
@@ -678,11 +670,6 @@
                 🧮 自动计算到期日期
               </button>
             </div>
-          </div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="mShowLunar" checked style="width:auto;"> 显示农历日期
-            </label>
           </div>
         </div>
 
@@ -803,21 +790,10 @@
     let notifyConfig = {};
     let currentTags = [];
     let currentChannels = [];
-    let showLunar = false;
     let listViewMode = 'table';
     let currentPage = 1;
     const pageSize = 10;
     let currentSort = { field: 'nextDate', asc: true };
-
-    function toLunar(dateStr) {
-      const d = new Date(dateStr);
-      const lm = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
-      const ld = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
-        '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
-        '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
-      const offset = Math.floor((d - new Date('2025-01-01')) / (1000*60*60*24));
-      return '农历：乙巳年' + lm[(d.getMonth()+1)%12] + '月' + ld[Math.abs(offset)%30];
-    }
 
     async function load() {
       try {
@@ -908,16 +884,13 @@
         const st = getStatus(s);
         const daysLeft = getDaysLeft(s.nextDate);
         const runDays = getRunDays(s.startDate);
-        const lunarNext = showLunar ? '<div class="lunar-text">' + toLunar(s.nextDate) + '</div>' : '';
-        const lunarStart = showLunar ? '<div class="lunar-text">' + toLunar(s.lastRenewDate || s.startDate) + '</div>' : '';
-
         return '<tr>' +
           '<td><div class="sub-name"><span class="icon">' + getTypeIcon(s.type) + '</span><div><div>' + esc(s.name) + '</div><div class="sub-meta">' + esc(s.note || '') + '</div></div></div></td>' +
           '<td>' + (s.tags || []).map(t => '<span class="tag tag-blue">' + esc(t) + '</span>').join(' ') + '</td>' +
           '<td><span class="tag tag-gray">' + esc(s.type || '未分类') + '</span></td>' +
-          '<td><div class="days-left ' + st.cls + '">' + (daysLeft <= 0 ? '已过期' : daysLeft + ' 天') + '</div><div>' + fmtDate(s.nextDate) + '</div>' + lunarNext + '</td>' +
+          '<td><div class="days-left ' + st.cls + '">' + (daysLeft <= 0 ? '已过期' : daysLeft + ' 天') + '</div><div>' + fmtDate(s.nextDate) + '</div></td>' +
           '<td>' + runDays + ' 天</td>' +
-          '<td>' + fmtDate(s.lastRenewDate || s.startDate) + lunarStart + '</td>' +
+          '<td>' + fmtDate(s.lastRenewDate || s.startDate) + '</td>' +
           '<td>' + (s.cycleValue || 1) + unitMap[s.cycleUnit] + '</td>' +
           '<td class="price">' + (s.price === 0 ? '免费' : (sym[s.currency] || s.currency) + s.price.toFixed(2)) + '</td>' +
           '<td><span class="tag tag-' + (st.cls === 'danger' ? 'red' : st.cls === 'warning' ? 'yellow' : st.cls === 'success' ? 'green' : 'gray') + '">' + st.text + '</span>' + (!s.enabled ? '<span class="tag tag-gray" style="margin-left:4px;">已停用</span>' : '') + '</td>' +
@@ -1066,12 +1039,6 @@
       renderList();
     }
 
-    function toggleLunar() {
-      showLunar = !showLunar;
-      document.getElementById('lunarIcon').textContent = showLunar ? '☀' : '☾';
-      document.getElementById('lunarText').textContent = showLunar ? '隐藏农历' : '显示农历';
-      renderList();
-    }
 
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('open');
@@ -1093,8 +1060,6 @@
       document.getElementById('mStartDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('mLastRenewDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('mNextDate').value = '';
-      document.getElementById('mShowLunar').checked = true;
-      document.getElementById('mLunarCycle').checked = false;
       document.getElementById('mNotifyDays').value = 3;
       document.getElementById('mNotifyTime').value = '11:00';
       document.getElementById('mExpiredRenewDays').value = 3;
@@ -1158,16 +1123,13 @@
       const cycleUnit = document.getElementById('mCycleUnit').value;
       if (!startDate) return;
       const start = new Date(startDate);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
       let next = new Date(start);
-      while (next <= today) {
-        switch(cycleUnit) {
-          case 'day': next.setDate(next.getDate() + cycleValue); break;
-          case 'week': next.setDate(next.getDate() + (cycleValue * 7)); break;
-          case 'month': next.setMonth(next.getMonth() + cycleValue); break;
-          case 'quarter': next.setMonth(next.getMonth() + (cycleValue * 3)); break;
-          case 'year': next.setFullYear(next.getFullYear() + cycleValue); break;
-        }
+      switch(cycleUnit) {
+        case 'day': next.setDate(next.getDate() + cycleValue); break;
+        case 'week': next.setDate(next.getDate() + (cycleValue * 7)); break;
+        case 'month': next.setMonth(next.getMonth() + cycleValue); break;
+        case 'quarter': next.setMonth(next.getMonth() + (cycleValue * 3)); break;
+        case 'year': next.setFullYear(next.getFullYear() + cycleValue); break;
       }
       document.getElementById('mNextDate').value = next.toISOString().split('T')[0];
       updateNotifyPreview();
@@ -1205,8 +1167,6 @@
         startDate: document.getElementById('mStartDate').value,
         lastRenewDate: document.getElementById('mLastRenewDate').value,
         nextDate: nextDate,
-        showLunar: document.getElementById('mShowLunar').checked,
-        lunarCycle: document.getElementById('mLunarCycle').checked,
         notifyDays: parseInt(document.getElementById('mNotifyDays').value) || 3,
         notifyTime: document.getElementById('mNotifyTime').value,
         notifyChannels: currentChannels,
@@ -1245,8 +1205,6 @@
       document.getElementById('mStartDate').value = s.startDate;
       document.getElementById('mLastRenewDate').value = s.lastRenewDate || s.startDate;
       document.getElementById('mNextDate').value = s.nextDate;
-      document.getElementById('mShowLunar').checked = s.showLunar !== false;
-      document.getElementById('mLunarCycle').checked = s.lunarCycle || false;
       document.getElementById('mNotifyDays').value = s.notifyDays || 3;
       document.getElementById('mNotifyTime').value = s.notifyTime || '11:00';
       document.getElementById('mExpiredRenewDays').value = s.expiredRenewDays || 3;
