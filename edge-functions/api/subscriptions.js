@@ -8,7 +8,7 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
   const body = await request.json();
 
   if (!body.name || !body.startDate || !body.nextDate) {
@@ -21,7 +21,7 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const data = await env.SUB_KV.get('subscriptions', 'json') || [];
+    const data = await SUB_KV.get('subscriptions', 'json') || [];
 
     const newSub = {
       id: generateId(),
@@ -36,8 +36,6 @@ export async function onRequestPost(context) {
       startDate: body.startDate,
       lastRenewDate: body.lastRenewDate || body.startDate,
       nextDate: body.nextDate,
-      showLunar: body.showLunar !== false,
-      lunarCycle: body.lunarCycle || false,
       notifyDays: parseInt(body.notifyDays) || 3,
       notifyTime: body.notifyTime || '11:00',
       notifyChannels: body.notifyChannels || [],
@@ -50,7 +48,7 @@ export async function onRequestPost(context) {
     };
 
     data.push(newSub);
-    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
+    await SUB_KV.put('subscriptions', JSON.stringify(data));
 
     return json(newSub, 201);
   } catch (e) {

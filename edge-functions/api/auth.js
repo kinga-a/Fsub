@@ -2,7 +2,6 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
 
-  // EdgeOne Pages 环境变量通过 context.env 访问
   const accessCode = env.ACCESS_CODE || 'admin';
 
   if (body.code === accessCode) {

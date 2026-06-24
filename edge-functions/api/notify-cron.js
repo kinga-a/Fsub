@@ -1,7 +1,6 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // 验证 Cron 密钥（防止被恶意调用）
   const authHeader = request.headers.get('Authorization') || '';
   const cronToken = env.CRON_TOKEN || 'your-cron-secret';
   if (!authHeader.includes(cronToken)) {
@@ -19,18 +18,15 @@ export async function onRequestPost(context) {
     let skipped = 0;
 
     for (const sub of subs) {
-      // 跳过已停用的订阅
       if (sub.enabled === false) {
         skipped++;
         continue;
       }
 
-      // 检查是否需要通知
       const nextDate = new Date(sub.nextDate);
       const notifyDate = new Date(nextDate);
       notifyDate.setDate(notifyDate.getDate() - (sub.notifyDays || 3));
 
-      // 检查是否到了通知日期范围
       const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
       const notifyDateStart = new Date(notifyDate); notifyDateStart.setHours(0,0,0,0);
 
@@ -39,14 +35,12 @@ export async function onRequestPost(context) {
         continue;
       }
 
-      // 检查是否到了通知时间（小时:分钟）
       const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
       if (currentHour !== notifyHour || currentMinute > 5) {
         skipped++;
         continue;
       }
 
-      // 检查今天是否已经发送过（避免重复）
       const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
       const alreadyNotified = await SUB_KV.get(todayKey);
       if (alreadyNotified) {
@@ -54,7 +48,6 @@ export async function onRequestPost(context) {
         continue;
       }
 
-      // 发送通知
       const msg = {
         title: `🔔 ${sub.name} 即将到期`,
         content: `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`
@@ -62,8 +55,6 @@ export async function onRequestPost(context) {
 
       const channels = sub.notifyChannels || [];
       const results = [];
-
-      // 如果没有指定渠道，默认发送到所有已启用的渠道
       const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
 
       for (const ch of targetChannels) {
@@ -81,7 +72,6 @@ export async function onRequestPost(context) {
         }
       }
 
-      // 标记今天已通知
       await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
       sent++;
     }
