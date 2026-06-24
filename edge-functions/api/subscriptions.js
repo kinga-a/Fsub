@@ -1,6 +1,6 @@
 export async function onRequestGet(context) {
   try {
-    const data = await context.env.SUB_KV.get('subscriptions', 'json') || [];
+    const data = await SUB_KV.get('subscriptions', 'json') || [];
     return json(data);
   } catch (e) {
     return json({ error: 'KV 读取失败: ' + e.message }, 500);
