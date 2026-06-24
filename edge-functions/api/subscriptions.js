@@ -8,65 +8,54 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
   const body = await request.json();
 
-  if (!body.name || !body.startDate) {
-    return json({ error: '缺少必填字段（名称、开始日期）' }, 400);
+  if (!body.name || !body.startDate || !body.nextDate) {
+    return json({ error: '缺少必填字段（名称、创建时间、到期日期）' }, 400);
   }
 
-  // 价格允许为0
   const price = parseFloat(body.price);
   if (isNaN(price) || price < 0) {
     return json({ error: '价格不能为负数' }, 400);
   }
 
   try {
-    const data = await SUB_KV.get('subscriptions', 'json') || [];
+    const data = await env.SUB_KV.get('subscriptions', 'json') || [];
 
     const newSub = {
       id: generateId(),
       name: body.name,
+      type: body.type || '软件订阅',
+      tags: body.tags || [],
       price: price,
       currency: body.currency || 'CNY',
-      cycle: body.cycle || 'monthly',
+      mode: body.mode || 'recurring',
+      cycleValue: parseInt(body.cycleValue) || 1,
+      cycleUnit: body.cycleUnit || 'month',
       startDate: body.startDate,
-      nextDate: body.nextDate || calcNextDate(body.startDate, body.cycle),
-      notifyDays: parseInt(body.notifyDays) || 7,
-      notifyTime: body.notifyTime || '08:00',
-      notifyDingtalk: body.notifyDingtalk || false,
-      notifyFeishu: body.notifyFeishu || false,
-      notifyWecom: body.notifyWecom || false,
-      notifyEmail: body.notifyEmail || false,
+      lastRenewDate: body.lastRenewDate || body.startDate,
+      nextDate: body.nextDate,
+      showLunar: body.showLunar !== false,
+      lunarCycle: body.lunarCycle || false,
+      notifyDays: parseInt(body.notifyDays) || 3,
+      notifyTime: body.notifyTime || '11:00',
+      notifyChannels: body.notifyChannels || [],
+      enabled: body.enabled !== false,
+      autoRenew: body.autoRenew || false,
+      expiredRenewDays: parseInt(body.expiredRenewDays) || 3,
       note: body.note || '',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     data.push(newSub);
-    await SUB_KV.put('subscriptions', JSON.stringify(data));
+    await env.SUB_KV.put('subscriptions', JSON.stringify(data));
 
     return json(newSub, 201);
   } catch (e) {
     return json({ error: 'KV 写入失败: ' + e.message }, 500);
   }
-}
-
-function calcNextDate(startDate, cycle) {
-  const start = new Date(startDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let next = new Date(start);
-  while (next <= today) {
-    switch(cycle) {
-      case 'weekly': next.setDate(next.getDate() + 7); break;
-      case 'monthly': next.setMonth(next.getMonth() + 1); break;
-      case 'quarterly': next.setMonth(next.getMonth() + 3); break;
-      case 'yearly': next.setFullYear(next.getFullYear() + 1); break;
-      default: next.setMonth(next.getMonth() + 1);
-    }
-  }
-  return next.toISOString().split('T')[0];
 }
 
 function generateId() {

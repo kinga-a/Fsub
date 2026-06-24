@@ -15,7 +15,7 @@ export function middleware(context) {
   // 检查 Cookie 中的 token
   const cookie = request.headers.get('Cookie') || '';
   const tokenMatch = cookie.match(/sub_token=([^;]+)/);
-  
+
   if (!tokenMatch) {
     // 未登录，返回登录页
     return new Response(LOGIN_HTML, {
@@ -25,7 +25,7 @@ export function middleware(context) {
       }
     });
   }
-  
+
   // 已登录，继续处理（返回 index.html）
   return next();
 }
@@ -40,12 +40,12 @@ const LOGIN_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>订阅管理中心 - 登录</title>
+  <title>RenewHelper | 登录</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -57,71 +57,76 @@ const LOGIN_HTML = `<!DOCTYPE html>
       border-radius: 20px;
       box-shadow: 0 25px 80px rgba(0,0,0,0.3);
       width: 90%;
-      max-width: 400px;
+      max-width: 420px;
       text-align: center;
     }
-    .login-box h1 { font-size: 28px; margin-bottom: 8px; color: #1a202c; }
-    .login-box p { color: #718096; margin-bottom: 32px; font-size: 15px; }
+    .brand-icon { font-size: 48px; margin-bottom: 16px; }
+    .login-box h1 { font-size: 24px; margin-bottom: 4px; color: #1e293b; font-weight: 700; }
+    .login-box .subtitle { color: #64748b; margin-bottom: 32px; font-size: 14px; letter-spacing: 2px; }
     .input-group { margin-bottom: 20px; text-align: left; }
     .input-group label {
       display: block;
       margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #4a5568;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
     }
     .input-group input {
       width: 100%;
       padding: 14px 16px;
       border: 2px solid #e2e8f0;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 16px;
       transition: all 0.3s;
+      font-family: inherit;
     }
     .input-group input:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 4px rgba(79,70,229,0.1);
     }
     .btn {
       width: 100%;
       padding: 14px;
-      background: #667eea;
+      background: #4f46e5;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
+      font-family: inherit;
     }
-    .btn:hover { background: #5a67d8; transform: translateY(-1px); }
+    .btn:hover { background: #4338ca; transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
     .error {
-      color: #e53e3e;
+      color: #ef4444;
       font-size: 14px;
       margin-top: 16px;
       display: none;
-      padding: 10px;
-      background: #fff5f5;
-      border-radius: 8px;
-      border: 1px solid #fed7d7;
+      padding: 12px;
+      background: #fef2f2;
+      border-radius: 10px;
+      border: 1px solid #fee2e2;
+      font-weight: 500;
     }
     .error.show { display: block; }
-    .icon { font-size: 48px; margin-bottom: 16px; }
+    .footer { margin-top: 24px; font-size: 12px; color: #94a3b8; }
   </style>
 </head>
 <body>
   <div class="login-box">
-    <div class="icon">🔐</div>
-    <h1>订阅管理中心</h1>
-    <p>请输入访问码以进入系统</p>
+    <div class="brand-icon">🔔</div>
+    <h1>RenewHelper</h1>
+    <div class="subtitle">时序 · 守望</div>
     <div class="input-group">
       <label>访问码</label>
       <input type="password" id="code" placeholder="请输入访问码" autofocus>
     </div>
     <button class="btn" onclick="login()">进入系统</button>
     <div class="error" id="error">访问码错误，请重试</div>
+    <div class="footer">RenewHelper v2.0 · 分布式云资产全周期托管</div>
   </div>
   <script>
     async function login() {

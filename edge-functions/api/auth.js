@@ -1,15 +1,15 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
-  
-  // 环境变量通过 env 访问（这是正确的）
+
+  // EdgeOne Pages 环境变量通过 context.env 访问
   const accessCode = env.ACCESS_CODE || 'admin';
-  
+
   if (body.code === accessCode) {
     const token = await hashString(accessCode + '_salt_' + Date.now());
     return json({ success: true, token });
   }
-  
+
   return json({ success: false, message: '访问码错误' }, 401);
 }
 

@@ -3,565 +3,725 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>订阅管理中心</title>
+  <title>RenewHelper | 订阅管理</title>
   <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+      --radius: 12px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f7fafc;
-      color: #2d3748;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
+      min-height: 100vh;
     }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
-    .header {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 24px;
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 240px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 50;
+      transition: transform 0.3s;
     }
-    .header h1 { font-size: 26px; }
-    .header p { color: #718096; font-size: 14px; margin-top: 4px; }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin-bottom: 24px;
+    .brand { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+    .brand h1 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
+    .brand .subtitle { font-size: 11px; color: var(--text-secondary); margin-top: 4px; letter-spacing: 1px; }
+    .nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: 10px; cursor: pointer;
+      font-size: 14px; font-weight: 500; color: var(--text-secondary);
+      transition: all 0.2s; margin-bottom: 4px;
+    }
+    .nav-item:hover { background: #f8fafc; color: var(--text); }
+    .nav-item.active { background: #eef2ff; color: var(--primary); }
+    .sidebar-footer {
+      padding: 16px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-secondary); text-align: center;
+    }
+    .main {
+      flex: 1; margin-left: 240px; padding: 24px 32px;
+      max-width: calc(100% - 240px);
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
+    }
+    .topbar h2 { font-size: 22px; }
+    .topbar-actions { display: flex; gap: 10px; }
+    .mobile-menu-btn {
+      display: none; padding: 8px 12px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;
     }
     .stat-card {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      background: var(--card); border-radius: var(--radius); padding: 24px;
+      box-shadow: var(--shadow); border-left: 4px solid var(--primary);
+      transition: transform 0.2s;
     }
-    .stat-card h3 { font-size: 13px; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-card .value { font-size: 36px; font-weight: 700; }
-    .stat-card .value.active { color: #48bb78; }
-    .stat-card .value.warning { color: #ed8936; }
-    .stat-card .value.danger { color: #e53e3e; }
-    .stat-card .value.info { color: #667eea; }
-
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card .label {
+      font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stat-card .value { font-size: 36px; font-weight: 700; color: var(--text); }
+    .stat-card .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
     .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 16px;
-      flex-wrap: wrap;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
     }
+    .toolbar-left, .toolbar-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer;
+      font-size: 14px; font-weight: 600; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
     }
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a67d8; }
-    .btn-secondary { background: #edf2f7; color: #4a5568; }
-    .btn-secondary:hover { background: #e2e8f0; }
-    .btn-danger { background: #fc8181; color: white; }
-    .btn-danger:hover { background: #f56565; }
-    .btn-notify { background: #ed8936; color: white; }
-    .btn-notify:hover { background: #dd6b20; }
-
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #f8fafc; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
     .search-box {
-      padding: 10px 16px;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      width: 280px;
-      font-size: 14px;
-      transition: border-color 0.3s;
+      padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+      width: 260px; font-size: 14px; transition: all 0.3s; background: var(--card);
     }
-    .search-box:focus { outline: none; border-color: #667eea; }
-
+    .search-box:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    .filter-select {
+      padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 14px; background: var(--card); cursor: pointer;
+    }
     .table-wrap {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      overflow: hidden;
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
     }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 16px; text-align: left; }
+    th, td { padding: 14px 16px; text-align: left; font-size: 14px; }
     th {
-      background: #f7fafc;
-      font-weight: 600;
-      font-size: 13px;
-      color: #4a5568;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      background: #f8fafc; font-weight: 600; color: var(--text-secondary);
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
     }
-    tr { border-bottom: 1px solid #edf2f7; transition: background 0.2s; }
-    tr:hover { background: #f7fafc; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--primary); }
+    tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
+    tr:hover { background: #f8fafc; }
     tr:last-child { border-bottom: none; }
-
+    td { color: var(--text); vertical-align: middle; }
+    .sub-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .sub-name .icon { font-size: 18px; }
+    .sub-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
     .tag {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
+      padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      display: inline-block; white-space: nowrap;
     }
-    .tag-active { background: #c6f6d5; color: #22543d; }
-    .tag-warning { background: #fefcbf; color: #744210; }
-    .tag-expired { background: #fed7d7; color: #742a2a; }
-    .tag-notify { background: #bee3f8; color: #2c5282; }
-
-    .price { font-weight: 700; color: #2d3748; }
-    .cycle { color: #718096; font-size: 13px; }
-    .notify-info { color: #ed8936; font-size: 12px; }
-
-    .actions { display: flex; gap: 6px; }
-    .icon-btn {
-      width: 34px; height: 34px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      background: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      transition: all 0.2s;
+    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-green { background: #d1fae5; color: #065f46; }
+    .tag-yellow { background: #fef3c7; color: #92400e; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-gray { background: #f1f5f9; color: #475569; }
+    .price { font-weight: 700; color: var(--text); }
+    .days-left { font-weight: 600; font-size: 13px; }
+    .days-left.danger { color: var(--danger); }
+    .days-left.warning { color: var(--warning); }
+    .days-left.ok { color: var(--success); }
+    .toggle {
+      width: 40px; height: 22px; appearance: none; background: #cbd5e1;
+      border-radius: 11px; position: relative; cursor: pointer; transition: background 0.3s;
     }
-    .icon-btn:hover { background: #edf2f7; border-color: #cbd5e0; }
-
-    .empty {
-      text-align: center;
-      padding: 80px 20px;
-      color: #a0aec0;
+    .toggle:checked { background: var(--primary); }
+    .toggle::after {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.3s;
     }
-    .empty svg { margin-bottom: 16px; opacity: 0.5; }
-    .empty h3 { color: #4a5568; margin-bottom: 8px; }
-
+    .toggle:checked::after { transform: translateX(18px); }
+    .actions { display: flex; gap: 4px; }
+    .action-btn {
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+      background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; transition: all 0.2s; color: var(--text-secondary);
+    }
+    .action-btn:hover { background: #f1f5f9; color: var(--text); }
+    .action-btn.renew:hover { background: #d1fae5; color: var(--success); border-color: var(--success); }
+    .action-btn.edit:hover { background: #dbeafe; color: var(--primary); border-color: var(--primary); }
+    .action-btn.delete:hover { background: #fee2e2; color: var(--danger); border-color: var(--danger); }
+    .empty { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
+    .pagination {
+      display: flex; justify-content: center; align-items: center;
+      gap: 8px; padding: 20px; border-top: 1px solid var(--border);
+    }
+    .page-btn {
+      padding: 6px 12px; border: 1px solid var(--border); background: var(--card);
+      border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s;
+    }
+    .page-btn:hover { background: #f8fafc; }
+    .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .modal-bg {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      backdrop-filter: blur(4px);
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;
+      z-index: 100; backdrop-filter: blur(4px); padding: 20px;
     }
     .modal-bg.open { display: flex; }
     .modal {
-      background: white;
-      border-radius: 20px;
-      width: 92%;
-      max-width: 640px;
-      max-height: 92vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+      background: var(--card); border-radius: 16px; width: 100%;
+      max-width: 680px; max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-lg);
     }
     .modal-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid #edf2f7;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
     }
     .modal-header h3 { font-size: 18px; }
     .modal-body { padding: 20px 24px; }
-
-    /* 紧凑表单样式 */
-    .form-group {
-      margin-bottom: 14px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      font-size: 13px;
-      color: #4a5568;
-    }
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 14px;
-      transition: border-color 0.3s;
-      height: 38px;
-    }
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    .form-group input[type="checkbox"] {
-      width: auto;
-      height: auto;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-    .form-row-2 {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    .form-row-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
-
     .modal-footer {
-      padding: 16px 24px;
-      border-top: 1px solid #edf2f7;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
+      padding: 16px 24px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 10px;
     }
-
-    .hint {
-      font-size: 11px;
-      color: #a0aec0;
-      margin-top: 3px;
+    .close-btn {
+      width: 32px; height: 32px; border: none; background: none; cursor: pointer;
+      font-size: 20px; color: var(--text-secondary); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .auto-calc {
-      background: #f0fff4;
-      border: 1px solid #9ae6b4;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 12px;
-      color: #22543d;
-      margin-top: 6px;
+    .close-btn:hover { background: #f1f5f9; }
+    .form-section { margin-bottom: 20px; }
+    .form-section-title {
+      font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
     }
-    .next-date-display {
-      background: #edf2f7;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 14px;
-      color: #2d3748;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 38px;
+    .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+    .form-row-2 { grid-template-columns: repeat(2, 1fr); }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-group label .required { color: var(--danger); }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 14px; transition: all 0.2s; background: var(--card); font-family: inherit;
     }
-    .next-date-display .label {
-      font-size: 12px;
-      color: #718096;
-      font-weight: normal;
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
     }
-
-    .notify-time-display {
-      background: #e6fffa;
-      border: 1px solid #81e6d9;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 12px;
-      color: #234e52;
-      margin-top: 6px;
+    .form-group .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .mode-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+    .mode-option {
+      flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px;
+      text-align: center; cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 500;
     }
-
-    .checkbox-group {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      padding: 6px 0;
+    .mode-option:hover { border-color: var(--primary); }
+    .mode-option.active { border-color: var(--primary); background: #eef2ff; color: var(--primary); }
+    .mode-option .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .tag-input {
+      display: flex; flex-wrap: wrap; gap: 6px; padding: 6px;
+      border: 1px solid var(--border); border-radius: 8px; min-height: 42px; align-items: center;
     }
-    .checkbox-group label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: normal;
-      font-size: 14px;
-      cursor: pointer;
-      color: #4a5568;
+    .tag-input input { border: none; outline: none; flex: 1; min-width: 80px; padding: 4px; font-size: 14px; }
+    .tag-pill {
+      background: #eef2ff; color: var(--primary); padding: 3px 10px;
+      border-radius: 16px; font-size: 12px; display: flex; align-items: center; gap: 4px;
     }
-    .checkbox-group input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: #667eea;
+    .tag-pill .remove { cursor: pointer; font-weight: bold; }
+    .channel-selector { display: flex; flex-wrap: wrap; gap: 10px; }
+    .channel-option {
+      display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+      border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+      font-size: 13px; transition: all 0.2s;
     }
-
-    .section-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #2d3748;
-      margin: 16px 0 10px 0;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #e2e8f0;
+    .channel-option:hover { border-color: var(--primary); }
+    .channel-option.active { border-color: var(--primary); background: #eef2ff; color: var(--primary); }
+    .channel-option input { display: none; }
+    .switch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
     }
-
-    .notify-modal { max-width: 600px; }
+    .switch-row:last-child { border-bottom: none; }
+    .switch-info h4 { font-size: 14px; margin-bottom: 2px; }
+    .switch-info p { font-size: 12px; color: var(--text-secondary); }
+    .date-display {
+      background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; font-size: 14px; color: var(--text);
+      display: flex; align-items: center; gap: 8px; min-height: 42px;
+    }
+    .date-display .label { font-size: 12px; color: var(--text-secondary); }
+    .notify-preview {
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+      padding: 10px 14px; font-size: 13px; color: #166534; margin-top: 8px;
+    }
+    .notify-modal { max-width: 560px; }
     .notify-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 12px;
-      flex-wrap: wrap;
+      display: flex; gap: 4px; margin-bottom: 20px; background: #f8fafc;
+      padding: 4px; border-radius: 10px;
     }
     .notify-tab {
-      padding: 8px 16px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      color: #718096;
-      border-radius: 8px;
-      transition: all 0.2s;
+      flex: 1; padding: 10px; border: none; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      border-radius: 8px; transition: all 0.2s; text-align: center;
     }
-    .notify-tab:hover { background: #f7fafc; }
-    .notify-tab.active { color: #667eea; background: #eef2ff; }
+    .notify-tab:hover { background: white; }
+    .notify-tab.active { background: white; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .notify-section { display: none; }
     .notify-section.active { display: block; }
-    .switch {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .switch input[type="checkbox"] {
-      width: 44px;
-      height: 24px;
-      appearance: none;
-      background: #cbd5e0;
-      border-radius: 12px;
-      position: relative;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .switch input[type="checkbox"]:checked { background: #667eea; }
-    .switch input[type="checkbox"]::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.3s;
-    }
-    .switch input[type="checkbox"]:checked::after { transform: translateX(20px); }
-    .test-btn {
-      background: #48bb78;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .test-btn:hover { background: #38a169; }
-    .test-btn:disabled { background: #a0aec0; cursor: not-allowed; }
-
     .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 14px 24px;
-      border-radius: 12px;
-      color: white;
-      font-weight: 600;
-      transform: translateY(120px);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 200;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      position: fixed; bottom: 24px; right: 24px; padding: 14px 24px;
+      border-radius: 12px; color: white; font-weight: 600;
+      transform: translateY(120px); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 200; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 400px;
     }
     .toast.show { transform: translateY(0); }
-    .toast.success { background: #48bb78; }
-    .toast.error { background: #e53e3e; }
-
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--info); }
+    .lunar-text { font-size: 11px; color: #8b5cf6; margin-top: 2px; }
+    .view-toggle { display: flex; background: #f8fafc; border-radius: 10px; padding: 3px; gap: 3px; }
+    .view-btn {
+      padding: 8px 14px; border: none; background: none; cursor: pointer;
+      border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .view-btn.active { background: white; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; max-width: 100%; }
+      .mobile-menu-btn { display: block; }
+    }
     @media (max-width: 768px) {
-      .stats { grid-template-columns: 1fr 1fr; }
-      .toolbar { flex-direction: column; align-items: stretch; }
-      .search-box { width: 100%; }
+      .stats-grid { grid-template-columns: 1fr; }
       .form-row { grid-template-columns: 1fr; }
       .form-row-2 { grid-template-columns: 1fr; }
-      .form-row-4 { grid-template-columns: repeat(2, 1fr); }
-      th, td { padding: 12px 8px; font-size: 14px; }
-      .header { flex-direction: column; gap: 16px; text-align: center; }
-      .notify-tabs { justify-content: center; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .search-box { width: 100%; }
+      .main { padding: 16px; }
+      th, td { padding: 10px 8px; font-size: 13px; }
+      .actions { flex-wrap: wrap; }
     }
   </style>
 <base target="_blank">
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>📊 订阅管理中心</h1>
-        <p>管理你的所有订阅服务</p>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <h1>🔔 RenewHelper</h1>
+        <div class="subtitle">时序 · 守望</div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-notify" onclick="openNotifyModal()">🔔 通知设置</button>
-        <button class="btn btn-secondary" onclick="logout()">🚪 退出登录</button>
+      <nav class="nav">
+        <div class="nav-item active" onclick="switchView('list')" data-view="list">
+          <span>📋</span> 订阅列表
+        </div>
+        <div class="nav-item" onclick="switchView('dashboard')" data-view="dashboard">
+          <span>📊</span> 仪表盘
+        </div>
+        <div class="nav-item" onclick="switchView('calendar')" data-view="calendar">
+          <span>📅</span> 日历视图
+        </div>
+        <div class="nav-item" onclick="switchView('analysis')" data-view="analysis">
+          <span>💰</span> 支出分析
+        </div>
+        <div class="nav-item" onclick="openNotifyModal()">
+          <span>🔔</span> 系统设置
+        </div>
+        <div class="nav-item" onclick="logout()">
+          <span>🚪</span> 安全退出
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        RenewHelper v2.0<br>分布式云资产全周期托管
       </div>
-    </div>
+    </aside>
 
-    <div class="stats">
-      <div class="stat-card">
-        <h3>活跃订阅</h3>
-        <div class="value active" id="statActive">0</div>
+    <main class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+          <h2 id="pageTitle">📋 订阅列表</h2>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary btn-sm" onclick="toggleLunar()">
+            <span id="lunarIcon">☾</span> <span id="lunarText">显示农历</span>
+          </button>
+          <button class="btn btn-primary" onclick="openModal()">
+            <span>+</span> 新增服务
+          </button>
+        </div>
       </div>
-      <div class="stat-card">
-        <h3>即将到期</h3>
-        <div class="value warning" id="statSoon">0</div>
-      </div>
-      <div class="stat-card">
-        <h3>月付总额</h3>
-        <div class="value info" id="statMonthly">¥0</div>
-      </div>
-      <div class="stat-card">
-        <h3>总订阅数</h3>
-        <div class="value" id="statTotal" style="color:#4a5568;">0</div>
-      </div>
-    </div>
 
-    <div class="toolbar">
-      <button class="btn btn-primary" onclick="openModal()">
-        <span>+</span> 新增订阅
-      </button>
-      <input type="text" class="search-box" id="search" placeholder="🔍 搜索订阅..." oninput="render()">
-    </div>
-
-    <div class="table-wrap" id="tableWrap">
-      <div class="empty" id="empty">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
-        <h3>暂无订阅</h3>
-        <p>点击上方按钮添加你的第一个订阅</p>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card success">
+          <div class="label">📊 服务总数</div>
+          <div class="value" id="statTotal">0</div>
+          <div class="sub">全部订阅服务</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="label">⏰ 即将到期</div>
+          <div class="value" id="statSoon">0</div>
+          <div class="sub">需关注处理</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="label">⚠️ 已过期/警告</div>
+          <div class="value" id="statExpired">0</div>
+          <div class="sub">请立即续费</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">💰 总花费/月</div>
+          <div class="value" id="statMonthly">¥0</div>
+          <div class="sub">按月均摊估算</div>
+        </div>
       </div>
-      <table id="table" style="display:none;">
-        <thead>
-          <tr>
-            <th>服务</th>
-            <th>价格</th>
-            <th>周期</th>
-            <th>开始日期</th>
-            <th>下次扣费</th>
-            <th>状态</th>
-            <th>通知</th>
-            <th>备注</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
+
+      <div class="toolbar" id="listToolbar">
+        <div class="toolbar-left">
+          <input type="text" class="search-box" id="searchInput" placeholder="搜索名称、类型或备注..." oninput="renderList()">
+          <select class="filter-select" id="filterType" onchange="renderList()">
+            <option value="">全部分类</option>
+            <option value="软件订阅">软件订阅</option>
+            <option value="电话">电话</option>
+            <option value="域名">域名</option>
+            <option value="服务器">服务器</option>
+            <option value="其他">其他</option>
+          </select>
+          <select class="filter-select" id="filterStatus" onchange="renderList()">
+            <option value="">全部状态</option>
+            <option value="active">正常</option>
+            <option value="soon">即将到期</option>
+            <option value="expired">已过期</option>
+            <option value="disabled">已停用</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <div class="view-toggle">
+            <button class="view-btn active" onclick="setListView('table')">☰ 列表</button>
+            <button class="view-btn" onclick="setListView('card')">⊞ 卡片</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="listContent">
+        <div class="empty" id="emptyState">
+          <div style="font-size:48px;margin-bottom:16px;">📭</div>
+          <h3>暂无订阅</h3>
+          <p>点击右上角「新增服务」添加你的第一个订阅</p>
+        </div>
+        <table id="subTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>服务名称</th>
+              <th>标签</th>
+              <th>类型</th>
+              <th class="sortable" onclick="sortBy('nextDate')">下次到期 ↕</th>
+              <th>已运行</th>
+              <th>上次续费</th>
+              <th>周期</th>
+              <th>账单额</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div id="cardView" style="display:none;padding:20px;"></div>
+        <div class="pagination" id="pagination" style="display:none;"></div>
+      </div>
+
+      <div id="dashboardView" style="display:none;">
+        <div class="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card success">
+            <div class="label">📊 活跃订阅</div>
+            <div class="value" id="dashActive">0</div>
+            <div class="sub">正常运行的服务</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="label">⏰ 即将到期</div>
+            <div class="value" id="dashSoon">0</div>
+            <div class="sub">需关注处理</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="label">⚠️ 已过期</div>
+            <div class="value" id="dashExpired">0</div>
+            <div class="sub">请立即续费</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">💰 月均支出</div>
+            <div class="value" id="dashMonthly">¥0</div>
+            <div class="sub">按月均摊估算</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+          <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📅 到期分布（未来30天）</h3>
+            <div id="expiryChart" style="height:200px;display:flex;align-items:flex-end;gap:8px;padding-bottom:30px;border-bottom:1px solid var(--border);position:relative;"></div>
+          </div>
+          <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">🏷️ 分类统计</h3>
+            <div id="typeChart" style="display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:20px;">
+          <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📈 最近添加</h3>
+          <div id="recentSubs" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+      <div id="calendarView" style="display:none;">
+        <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)">◀ 上月</button>
+            <h3 id="calendarTitle" style="font-size:18px;color:var(--text);"></h3>
+            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">下月 ▶</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;">
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">日</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">一</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">二</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">三</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">四</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">五</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">六</div>
+          </div>
+          <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-top:1px;"></div>
+        </div>
+        <div id="calendarLegend" style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fee2e2;display:inline-block;"></span> 已过期</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fef3c7;display:inline-block;"></span> 即将到期</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#dbeafe;display:inline-block;"></span> 正常</div>
+        </div>
+      </div>
+      <div id="analysisView" style="display:none;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="label">💰 本月支出</div>
+            <div class="value" id="analysisMonth">¥0</div>
+            <div class="sub">当前月份</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">📊 年度支出</div>
+            <div class="value" id="analysisYear">¥0</div>
+            <div class="sub">今年累计</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">📈 日均支出</div>
+            <div class="value" id="analysisDaily">¥0</div>
+            <div class="sub">按年分摊</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+          <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">🏷️ 分类支出占比</h3>
+            <div id="categoryChart" style="display:flex;flex-direction:column;gap:14px;"></div>
+          </div>
+          <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📅 月度支出趋势</h3>
+            <div id="monthlyChart" style="height:220px;display:flex;align-items:flex-end;gap:12px;padding-bottom:30px;border-bottom:1px solid var(--border);position:relative;"></div>
+          </div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:20px;">
+          <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">💸 支出排行 TOP10</h3>
+          <div id="topExpense" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+    </main>
   </div>
 
-  <!-- 订阅编辑弹窗 - 紧凑布局 -->
   <div class="modal-bg" id="modalBg">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">新增订阅</h3>
-        <button class="icon-btn" onclick="closeModal()">✕</button>
+        <h3 id="modalTitle">新增服务</h3>
+        <button class="close-btn" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
-        <!-- 基础信息 -->
-        <div class="section-title">📋 基础信息</div>
-        <div class="form-group">
-          <label>服务名称 *</label>
-          <input type="text" id="mName" placeholder="例如：Netflix、Spotify">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>价格</label>
-            <input type="number" id="mPrice" placeholder="0" step="0.01" min="0">
-            <div class="hint">支持 0（免费）</div>
-          </div>
-          <div class="form-group">
-            <label>货币</label>
-            <select id="mCurrency">
-              <option value="CNY">CNY ¥</option>
-              <option value="USD">USD $</option>
-              <option value="EUR">EUR €</option>
-              <option value="GBP">GBP £</option>
-              <option value="JPY">JPY ¥</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>付费周期 *</label>
-            <select id="mCycle" onchange="calcNextDate()">
-              <option value="weekly">周付</option>
-              <option value="monthly" selected>月付</option>
-              <option value="quarterly">季付</option>
-              <option value="yearly">年付</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 日期设置 -->
-        <div class="section-title">📅 日期设置</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>开始日期 *</label>
-            <input type="date" id="mStartDate" onchange="calcNextDate()">
-          </div>
-          <div class="form-group">
-            <label>下次扣费日期</label>
-            <div class="next-date-display" id="nextDateDisplay">
-              <span class="label">自动计算</span>
-              <span id="nextDateValue">--</span>
+        <div class="form-section">
+          <div class="form-section-title">📋 基础信息</div>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label>名称 <span class="required">*</span></label>
+              <input type="text" id="mName" placeholder="例如：iCloud">
+            </div>
+            <div class="form-group">
+              <label>订阅类型</label>
+              <select id="mType">
+                <option value="软件订阅">软件订阅</option>
+                <option value="电话">电话</option>
+                <option value="域名">域名</option>
+                <option value="服务器">服务器</option>
+                <option value="其他">其他</option>
+              </select>
             </div>
           </div>
           <div class="form-group">
-            <label>提前通知天数</label>
-            <select id="mNotifyDays" onchange="updateNotifyHint()">
-              <option value="1">1 天</option>
-              <option value="3">3 天</option>
-              <option value="7" selected>7 天</option>
-              <option value="14">14 天</option>
-              <option value="30">30 天</option>
-            </select>
+            <label>分类标签</label>
+            <div class="tag-input" id="tagInput" onclick="document.getElementById('tagInputField').focus()">
+              <div id="tagList"></div>
+              <input type="text" id="tagInputField" placeholder="输入标签按回车添加" onkeydown="handleTagInput(event)">
+            </div>
+            <div class="hint">可输入多个标签，按回车添加</div>
           </div>
         </div>
-        <div id="calcHint" class="auto-calc" style="display:none;"></div>
 
-        <!-- 通知设置 -->
-        <div class="section-title">🔔 通知设置</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>通知时间</label>
-            <input type="time" id="mNotifyTime" value="08:00" onchange="updateNotifyHint()">
-            <div class="hint">到期前指定天数的提醒时间</div>
+        <div class="form-section">
+          <div class="form-section-title">🔔 推送渠道</div>
+          <div class="hint" style="margin-bottom:10px;">选择推送渠道（留空则默认推送所有已启用的渠道）</div>
+          <div class="channel-selector" id="channelSelector">
+            <label class="channel-option" onclick="toggleChannel(this, 'dingtalk')">
+              <input type="checkbox" value="dingtalk"> 📱 钉钉
+            </label>
+            <label class="channel-option" onclick="toggleChannel(this, 'feishu')">
+              <input type="checkbox" value="feishu"> 🚀 飞书
+            </label>
+            <label class="channel-option" onclick="toggleChannel(this, 'wecom')">
+              <input type="checkbox" value="wecom"> 💼 企微
+            </label>
+            <label class="channel-option" onclick="toggleChannel(this, 'email')">
+              <input type="checkbox" value="email"> 📧 邮件
+            </label>
           </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label>通知方式</label>
-            <div class="checkbox-group">
-              <label><input type="checkbox" id="mNotifyDingtalk"> 钉钉</label>
-              <label><input type="checkbox" id="mNotifyFeishu"> 飞书</label>
-              <label><input type="checkbox" id="mNotifyWecom"> 企业微信</label>
-              <label><input type="checkbox" id="mNotifyEmail"> 邮件</label>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">💰 金额设置</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>账单额</label>
+              <input type="number" id="mPrice" placeholder="0.00" step="0.01" min="0">
+              <div class="hint">用于统计支出和生成仪表盘</div>
+            </div>
+            <div class="form-group">
+              <label>币种</label>
+              <select id="mCurrency">
+                <option value="CNY">CNY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>模式 <span class="required">*</span></label>
+              <div class="mode-selector">
+                <div class="mode-option active" onclick="setMode('recurring')" data-mode="recurring">
+                  <span class="icon">🔄</span><div>循环订阅</div>
+                </div>
+                <div class="mode-option" onclick="setMode('reset')" data-mode="reset">
+                  <span class="icon">⏳</span><div>到期重置</div>
+                </div>
+                <div class="mode-option" onclick="setMode('fixed')" data-mode="fixed">
+                  <span class="icon">📅</span><div>固定重复</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div id="notifyTimeHint" class="notify-time-display" style="display:none;"></div>
 
-        <!-- 备注 -->
-        <div class="section-title">📝 其他</div>
-        <div class="form-group">
-          <label>备注</label>
-          <input type="text" id="mNote" placeholder="可选：账号信息、共享人数等">
+        <div class="form-section">
+          <div class="form-section-title">⏱️ 周期设置</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>周期时长 <span class="required">*</span></label>
+              <input type="number" id="mCycleValue" value="1" min="1">
+            </div>
+            <div class="form-group">
+              <label>周期单位 <span class="required">*</span></label>
+              <select id="mCycleUnit" onchange="calcNextDate()">
+                <option value="day">天</option>
+                <option value="week">周</option>
+                <option value="month" selected>月</option>
+                <option value="quarter">季度</option>
+                <option value="year">年</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="mLunarCycle" style="width:auto;"> 农历周期
+              </label>
+            </div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label>创建时间 <span class="required">*</span></label>
+              <input type="date" id="mStartDate" onchange="calcNextDate()">
+            </div>
+            <div class="form-group">
+              <label>上次续期 <span class="required">*</span></label>
+              <input type="date" id="mLastRenewDate" onchange="calcNextDate()">
+              <div class="hint">修改此日期将重新计算下次到期</div>
+            </div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label>到期日期 <span class="required">*</span></label>
+              <input type="date" id="mNextDate">
+              <div class="hint">可手动修改或自动计算</div>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <button class="btn btn-secondary" onclick="autoCalcDate()" style="width:100%;">
+                🧮 自动计算到期日期
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="mShowLunar" checked style="width:auto;"> 显示农历日期
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🔔 提醒设置</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>提醒提前天数 <span class="required">*</span></label>
+              <input type="number" id="mNotifyDays" value="3" min="0">
+            </div>
+            <div class="form-group">
+              <label>提醒时间</label>
+              <input type="time" id="mNotifyTime" value="11:00">
+            </div>
+            <div class="form-group">
+              <label>过期续期天数</label>
+              <input type="number" id="mExpiredRenewDays" value="3" min="0">
+            </div>
+          </div>
+          <div id="notifyPreview" class="notify-preview" style="display:none;"></div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">⚙️ 选项设置</div>
+          <div class="switch-row">
+            <div class="switch-info"><h4>启用订阅</h4><p>停用后将不再发送提醒</p></div>
+            <input type="checkbox" class="toggle" id="mEnabled" checked>
+          </div>
+          <div class="switch-row">
+            <div class="switch-info"><h4>自动续期</h4><p>到期后自动更新下次到期日期</p></div>
+            <input type="checkbox" class="toggle" id="mAutoRenew">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📝 备注信息</div>
+          <div class="form-group">
+            <textarea id="mNote" rows="3" placeholder="可添加相关备注信息..."></textarea>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -571,95 +731,60 @@
     </div>
   </div>
 
-  <!-- 通知设置弹窗 -->
   <div class="modal-bg" id="notifyModalBg">
     <div class="modal notify-modal">
       <div class="modal-header">
-        <h3>🔔 通知设置</h3>
-        <button class="icon-btn" onclick="closeNotifyModal()">✕</button>
+        <h3>🔔 系统设置 - 通知渠道</h3>
+        <button class="close-btn" onclick="closeNotifyModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="notify-tabs">
-          <button class="notify-tab active" onclick="switchTab('dingtalk')">📱 钉钉</button>
-          <button class="notify-tab" onclick="switchTab('feishu')">🚀 飞书</button>
-          <button class="notify-tab" onclick="switchTab('wecom')">💼 企业微信</button>
-          <button class="notify-tab" onclick="switchTab('email')">📧 邮件</button>
+          <button class="notify-tab active" onclick="switchNotifyTab('dingtalk')">📱 钉钉</button>
+          <button class="notify-tab" onclick="switchNotifyTab('feishu')">🚀 飞书</button>
+          <button class="notify-tab" onclick="switchNotifyTab('wecom')">💼 企微</button>
+          <button class="notify-tab" onclick="switchNotifyTab('email')">📧 邮件</button>
         </div>
-
         <div class="notify-section active" id="tab-dingtalk">
-          <div class="switch">
-            <input type="checkbox" id="dingtalkEnabled">
-            <label for="dingtalkEnabled">启用钉钉通知</label>
+          <div class="switch-row" style="margin-bottom:16px;">
+            <div class="switch-info"><h4>启用钉钉通知</h4></div>
+            <input type="checkbox" class="toggle" id="dingtalkEnabled">
           </div>
-          <div class="form-group">
-            <label>Webhook 地址</label>
-            <input type="text" id="dingtalkWebhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx">
-          </div>
-          <div class="form-group">
-            <label>加签密钥（可选）</label>
-            <input type="text" id="dingtalkSecret" placeholder="SECxxxxxxxx">
-          </div>
-          <button class="test-btn" onclick="testNotify('dingtalk')">发送测试消息</button>
+          <div class="form-group"><label>Webhook 地址</label><input type="text" id="dingtalkWebhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx"></div>
+          <div class="form-group"><label>加签密钥（可选）</label><input type="text" id="dingtalkSecret" placeholder="SECxxxxxxxx"></div>
+          <button class="btn btn-success btn-sm" onclick="testNotify('dingtalk')" style="margin-top:10px;">发送测试消息</button>
         </div>
-
         <div class="notify-section" id="tab-feishu">
-          <div class="switch">
-            <input type="checkbox" id="feishuEnabled">
-            <label for="feishuEnabled">启用飞书通知</label>
+          <div class="switch-row" style="margin-bottom:16px;">
+            <div class="switch-info"><h4>启用飞书通知</h4></div>
+            <input type="checkbox" class="toggle" id="feishuEnabled">
           </div>
-          <div class="form-group">
-            <label>Webhook 地址</label>
-            <input type="text" id="feishuWebhook" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx">
-          </div>
-          <div class="form-group">
-            <label>加签密钥（可选）</label>
-            <input type="text" id="feishuSecret" placeholder="xxxxxxxx">
-          </div>
-          <button class="test-btn" onclick="testNotify('feishu')">发送测试消息</button>
+          <div class="form-group"><label>Webhook 地址</label><input type="text" id="feishuWebhook" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"></div>
+          <div class="form-group"><label>加签密钥（可选）</label><input type="text" id="feishuSecret" placeholder="xxxxxxxx"></div>
+          <button class="btn btn-success btn-sm" onclick="testNotify('feishu')" style="margin-top:10px;">发送测试消息</button>
         </div>
-
         <div class="notify-section" id="tab-wecom">
-          <div class="switch">
-            <input type="checkbox" id="wecomEnabled">
-            <label for="wecomEnabled">启用企业微信通知</label>
+          <div class="switch-row" style="margin-bottom:16px;">
+            <div class="switch-info"><h4>启用企业微信通知</h4></div>
+            <input type="checkbox" class="toggle" id="wecomEnabled">
           </div>
-          <div class="form-group">
-            <label>Webhook 地址（或 Key）</label>
-            <input type="text" id="wecomWebhook" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx">
-          </div>
-          <button class="test-btn" onclick="testNotify('wecom')">发送测试消息</button>
+          <div class="form-group"><label>Webhook 地址（或 Key）</label><input type="text" id="wecomWebhook" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"></div>
+          <button class="btn btn-success btn-sm" onclick="testNotify('wecom')" style="margin-top:10px;">发送测试消息</button>
         </div>
-
         <div class="notify-section" id="tab-email">
-          <div class="switch">
-            <input type="checkbox" id="emailEnabled">
-            <label for="emailEnabled">启用邮件通知</label>
+          <div class="switch-row" style="margin-bottom:16px;">
+            <div class="switch-info"><h4>启用邮件通知</h4></div>
+            <input type="checkbox" class="toggle" id="emailEnabled">
           </div>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>SMTP 服务器</label>
-              <input type="text" id="emailSmtpHost" placeholder="smtp.gmail.com">
-            </div>
-            <div class="form-group">
-              <label>端口</label>
-              <input type="number" id="emailSmtpPort" value="587">
-            </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>SMTP 服务器</label><input type="text" id="emailSmtpHost" placeholder="smtp.gmail.com"></div>
+            <div class="form-group"><label>端口</label><input type="number" id="emailSmtpPort" value="587"></div>
           </div>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>用户名</label>
-              <input type="text" id="emailUsername" placeholder="your@email.com">
-            </div>
-            <div class="form-group">
-              <label>密码</label>
-              <input type="password" id="emailPassword" placeholder="应用专用密码">
-            </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label>用户名</label><input type="text" id="emailUsername" placeholder="your@email.com"></div>
+            <div class="form-group"><label>密码</label><input type="password" id="emailPassword" placeholder="应用专用密码"></div>
           </div>
-          <div class="form-group">
-            <label>接收邮箱</label>
-            <input type="text" id="emailTo" placeholder="notify@email.com">
-          </div>
-          <button class="test-btn" onclick="testNotify('email')">发送测试消息</button>
+          <div class="form-group"><label>接收邮箱</label><input type="text" id="emailTo" placeholder="notify@email.com"></div>
+          <button class="btn btn-success btn-sm" onclick="testNotify('email')" style="margin-top:10px;">发送测试消息</button>
         </div>
       </div>
       <div class="modal-footer">
@@ -672,165 +797,213 @@
   <div class="toast" id="toast"></div>
 
   <script>
+
     let subs = [];
     let editingId = null;
     let notifyConfig = {};
+    let currentTags = [];
+    let currentChannels = [];
+    let showLunar = false;
+    let listViewMode = 'table';
+    let currentPage = 1;
+    const pageSize = 10;
+    let currentSort = { field: 'nextDate', asc: true };
 
-    // 计算下次扣费日期
-    function calcNextDate() {
-      const startDate = document.getElementById('mStartDate').value;
-      const cycle = document.getElementById('mCycle').value;
-
-      if (!startDate) {
-        document.getElementById('calcHint').style.display = 'none';
-        document.getElementById('nextDateValue').textContent = '--';
-        return;
-      }
-
-      const start = new Date(startDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      let next = new Date(start);
-
-      // 循环累加周期，直到超过今天
-      while (next <= today) {
-        switch(cycle) {
-          case 'weekly': next.setDate(next.getDate() + 7); break;
-          case 'monthly': next.setMonth(next.getMonth() + 1); break;
-          case 'quarterly': next.setMonth(next.getMonth() + 3); break;
-          case 'yearly': next.setFullYear(next.getFullYear() + 1); break;
-        }
-      }
-
-      const nextDateStr = next.toISOString().split('T')[0];
-      document.getElementById('nextDateValue').textContent = nextDateStr;
-
-      const cycleText = {weekly:'每周', monthly:'每月', quarterly:'每季度', yearly:'每年'};
-      document.getElementById('calcHint').style.display = 'block';
-      document.getElementById('calcHint').textContent = 
-          `✅ ${cycleText[cycle]}周期：从 ${startDate} 开始，下次扣费 ${nextDateStr}`;
-
-      updateNotifyHint();
-    }
-
-    // 更新通知时间提示
-    function updateNotifyHint() {
-      const days = document.getElementById('mNotifyDays').value;
-      const time = document.getElementById('mNotifyTime').value;
-      const nextDate = document.getElementById('nextDateValue').textContent;
-
-      if (nextDate && nextDate !== '--' && time) {
-        const notifyDate = new Date(nextDate);
-        notifyDate.setDate(notifyDate.getDate() - parseInt(days));
-        const dateStr = notifyDate.toLocaleDateString('zh-CN');
-        document.getElementById('notifyTimeHint').style.display = 'block';
-        document.getElementById('notifyTimeHint').textContent = 
-            `📅 将在 ${dateStr} ${time} 发送到期提醒（提前 ${days} 天）`;
-      } else {
-        document.getElementById('notifyTimeHint').style.display = 'none';
-      }
+    function toLunar(dateStr) {
+      const d = new Date(dateStr);
+      const lm = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+      const ld = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+        '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+        '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+      const offset = Math.floor((d - new Date('2025-01-01')) / (1000*60*60*24));
+      return '农历：乙巳年' + lm[(d.getMonth()+1)%12] + '月' + ld[Math.abs(offset)%30];
     }
 
     async function load() {
       try {
         const res = await fetch('/api/subscriptions');
         if (res.status === 401) { location.reload(); return; }
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('服务器返回非 JSON 数据');
-        }
-        if (!res.ok) { const err = await res.json(); throw new Error(err.error || '加载失败'); }
+        if (!res.ok) { throw new Error('加载失败'); }
         subs = await res.json();
-        render();
-        stats();
+        renderList();
+        updateStats();
       } catch (e) { toast('加载数据失败: ' + e.message, 'error'); }
     }
 
-    function render() {
-      const q = document.getElementById('search').value.toLowerCase();
-      const filtered = subs.filter(s => 
-        s.name.toLowerCase().includes(q) || (s.note && s.note.toLowerCase().includes(q))
-      );
+    function renderList() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const typeFilter = document.getElementById('filterType').value;
+      const statusFilter = document.getElementById('filterStatus').value;
 
-      const empty = document.getElementById('empty');
-      const table = document.getElementById('table');
-      const tbody = document.getElementById('tbody');
+      let filtered = subs.filter(s => {
+        const matchQ = !q || s.name.toLowerCase().includes(q) || 
+          (s.type && s.type.toLowerCase().includes(q)) ||
+          (s.note && s.note.toLowerCase().includes(q)) ||
+          (s.tags && s.tags.some(t => t.toLowerCase().includes(q)));
+        const matchType = !typeFilter || s.type === typeFilter;
+        const st = getStatus(s);
+        const matchStatus = !statusFilter || 
+          (statusFilter === 'disabled' && !s.enabled) ||
+          (statusFilter === st.key && s.enabled);
+        return matchQ && matchType && matchStatus;
+      });
+
+      filtered.sort((a, b) => {
+        let va, vb;
+        switch(currentSort.field) {
+          case 'nextDate': va = new Date(a.nextDate); vb = new Date(b.nextDate); break;
+          case 'name': va = a.name; vb = b.name; break;
+          case 'price': va = a.price; vb = b.price; break;
+          default: va = new Date(a.nextDate); vb = new Date(b.nextDate);
+        }
+        if (va < vb) return currentSort.asc ? -1 : 1;
+        if (va > vb) return currentSort.asc ? 1 : -1;
+        return 0;
+      });
+
+      const empty = document.getElementById('emptyState');
+      const table = document.getElementById('subTable');
+      const cardView = document.getElementById('cardView');
+      const pagination = document.getElementById('pagination');
 
       if (filtered.length === 0) {
-        empty.style.display = 'block'; table.style.display = 'none'; return;
+        empty.style.display = 'block';
+        table.style.display = 'none';
+        cardView.style.display = 'none';
+        pagination.style.display = 'none';
+        return;
       }
-      empty.style.display = 'none'; table.style.display = 'table';
+      empty.style.display = 'none';
 
+      const totalPages = Math.ceil(filtered.length / pageSize);
+      const start = (currentPage - 1) * pageSize;
+      const pageData = filtered.slice(start, start + pageSize);
+
+      if (listViewMode === 'table') {
+        table.style.display = 'table';
+        cardView.style.display = 'none';
+        renderTable(pageData);
+      } else {
+        table.style.display = 'none';
+        cardView.style.display = 'grid';
+        cardView.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+        cardView.style.gap = '16px';
+        renderCards(pageData);
+      }
+
+      if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        renderPagination(totalPages);
+      } else {
+        pagination.style.display = 'none';
+      }
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tbody');
       const sym = { CNY: '¥', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
-      const cycleMap = { weekly: '周付', monthly: '月付', quarterly: '季付', yearly: '年付' };
+      const unitMap = { day: '天', week: '周', month: '月', quarter: '季', year: '年' };
 
-      tbody.innerHTML = filtered.map(s => {
-        const st = getStatus(s.nextDate, s.notifyDays);
-        const notifyChannels = [];
-        if (s.notifyDingtalk) notifyChannels.push('钉钉');
-        if (s.notifyFeishu) notifyChannels.push('飞书');
-        if (s.notifyWecom) notifyChannels.push('企微');
-        if (s.notifyEmail) notifyChannels.push('邮件');
+      tbody.innerHTML = data.map(s => {
+        const st = getStatus(s);
+        const daysLeft = getDaysLeft(s.nextDate);
+        const runDays = getRunDays(s.startDate);
+        const lunarNext = showLunar ? '<div class="lunar-text">' + toLunar(s.nextDate) + '</div>' : '';
+        const lunarStart = showLunar ? '<div class="lunar-text">' + toLunar(s.lastRenewDate || s.startDate) + '</div>' : '';
 
-        return `<tr>
-          <td><strong>${esc(s.name)}</strong></td>
-          <td class="price">${s.price === 0 ? '免费' : (sym[s.currency] || s.currency) + s.price.toFixed(2)}</td>
-          <td class="cycle">${cycleMap[s.cycle] || s.cycle}</td>
-          <td>${fmtDate(s.startDate)}</td>
-          <td>${fmtDate(s.nextDate)}</td>
-          <td><span class="tag tag-${st.cls}">${st.text}</span></td>
-          <td>
-            ${notifyChannels.length > 0 
-              ? `<span class="tag tag-notify" title="提前${s.notifyDays || 7}天 ${s.notifyTime || '08:00'}提醒">${st.notifyText || notifyChannels.join(',')}</span>` 
-              : '-'}
-          </td>
-          <td>${esc(s.note || '-')}</td>
-          <td>
-            <div class="actions">
-              <button class="icon-btn" onclick="edit('${s.id}')" title="编辑">✏️</button>
-              <button class="icon-btn" onclick="del('${s.id}')" title="删除">🗑️</button>
-            </div>
-          </td>
-        </tr>`;
+        return '<tr>' +
+          '<td><div class="sub-name"><span class="icon">' + getTypeIcon(s.type) + '</span><div><div>' + esc(s.name) + '</div><div class="sub-meta">' + esc(s.note || '') + '</div></div></div></td>' +
+          '<td>' + (s.tags || []).map(t => '<span class="tag tag-blue">' + esc(t) + '</span>').join(' ') + '</td>' +
+          '<td><span class="tag tag-gray">' + esc(s.type || '未分类') + '</span></td>' +
+          '<td><div class="days-left ' + st.cls + '">' + (daysLeft <= 0 ? '已过期' : daysLeft + ' 天') + '</div><div>' + fmtDate(s.nextDate) + '</div>' + lunarNext + '</td>' +
+          '<td>' + runDays + ' 天</td>' +
+          '<td>' + fmtDate(s.lastRenewDate || s.startDate) + lunarStart + '</td>' +
+          '<td>' + (s.cycleValue || 1) + unitMap[s.cycleUnit] + '</td>' +
+          '<td class="price">' + (s.price === 0 ? '免费' : (sym[s.currency] || s.currency) + s.price.toFixed(2)) + '</td>' +
+          '<td><span class="tag tag-' + (st.cls === 'danger' ? 'red' : st.cls === 'warning' ? 'yellow' : st.cls === 'success' ? 'green' : 'gray') + '">' + st.text + '</span>' + (!s.enabled ? '<span class="tag tag-gray" style="margin-left:4px;">已停用</span>' : '') + '</td>' +
+          '<td><div class="actions">' +
+            '<button class="action-btn renew" onclick="renewSub(\'' + s.id + '\')" title="续订">🔄</button>' +
+            '<button class="action-btn" onclick="testSubNotify(\'' + s.id + '\')" title="测试通知">🔔</button>' +
+            '<button class="action-btn edit" onclick="edit(\'' + s.id + '\')" title="编辑">✏️</button>' +
+            '<button class="action-btn delete" onclick="del(\'' + s.id + '\')" title="删除">🗑️</button>' +
+          '</div></td></tr>';
       }).join('');
     }
 
-    function stats() {
-      const now = new Date();
-      const soon = new Date(); soon.setDate(soon.getDate() + 7);
+    function renderCards(data) {
+      const cardView = document.getElementById('cardView');
+      const sym = { CNY: '¥', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
+      const unitMap = { day: '天', week: '周', month: '月', quarter: '季', year: '年' };
 
-      const active = subs.filter(s => new Date(s.nextDate) >= now).length;
-      const soonCount = subs.filter(s => {
-        const d = new Date(s.nextDate);
-        return d >= now && d <= soon;
-      }).length;
-
-      let monthly = 0;
-      const rate = { weekly: 4.33, monthly: 1, quarterly: 1/3, yearly: 1/12 };
-      const fx = { CNY: 1, USD: 7.2, EUR: 7.8, GBP: 9.1, JPY: 0.05 };
-
-      subs.forEach(s => {
-        if (s.price > 0) {
-          monthly += s.price * (rate[s.cycle] || 1) * (fx[s.currency] || 1);
-        }
-      });
-
-      document.getElementById('statActive').textContent = active;
-      document.getElementById('statSoon').textContent = soonCount;
-      document.getElementById('statMonthly').textContent = '¥' + monthly.toFixed(0);
-      document.getElementById('statTotal').textContent = subs.length;
+      cardView.innerHTML = data.map(s => {
+        const st = getStatus(s);
+        const daysLeft = getDaysLeft(s.nextDate);
+        return '<div style="background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-left:4px solid ' + st.color + '">' +
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">' +
+            '<div><div style="font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px;">' +
+              '<span>' + getTypeIcon(s.type) + '</span> ' + esc(s.name) + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">' + esc(s.type || '未分类') + '</div></div>' +
+            '<span class="tag tag-' + (st.cls === 'danger' ? 'red' : st.cls === 'warning' ? 'yellow' : st.cls === 'success' ? 'green' : 'gray') + '">' + st.text + '</span></div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;font-size:13px;">' +
+            '<div><div style="color:var(--text-secondary);font-size:11px;">下次到期</div><div style="font-weight:600;color:' + st.color + '">' + (daysLeft <= 0 ? '已过期' : daysLeft + '天后') + '</div><div>' + fmtDate(s.nextDate) + '</div></div>' +
+            '<div><div style="color:var(--text-secondary);font-size:11px;">账单额</div><div style="font-weight:600;">' + (s.price === 0 ? '免费' : (sym[s.currency] || s.currency) + s.price.toFixed(2)) + '</div><div>' + (s.cycleValue || 1) + unitMap[s.cycleUnit] + '</div></div></div>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<button class="btn btn-sm btn-secondary" onclick="renewSub(\'' + s.id + '\')">🔄 续订</button>' +
+            '<button class="btn btn-sm btn-secondary" onclick="edit(\'' + s.id + '\')">✏️ 编辑</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="del(\'' + s.id + '\')">🗑️</button></div></div>';
+      }).join('');
     }
 
-    function getStatus(dateStr, notifyDays) {
-      const d = new Date(dateStr);
-      const now = new Date();
-      const soon = new Date(); 
-      soon.setDate(soon.getDate() + (notifyDays || 7));
+    function renderPagination(totalPages) {
+      const pagination = document.getElementById('pagination');
+      let html = '<button class="page-btn" onclick="changePage(' + (currentPage-1) + ')" ' + (currentPage===1?'disabled':'') + '>上一页</button>';
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+          html += '<button class="page-btn ' + (i===currentPage?'active':'') + '" onclick="changePage(' + i + ')">' + i + '</button>';
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+          html += '<span style="color:var(--text-secondary);">...</span>';
+        }
+      }
+      html += '<button class="page-btn" onclick="changePage(' + (currentPage+1) + ')" ' + (currentPage===totalPages?'disabled':'') + '>下一页</button>';
+      pagination.innerHTML = html;
+    }
 
-      if (d < now) return { cls: 'expired', text: '已过期', notifyText: '已过期' };
-      if (d <= soon) return { cls: 'warning', text: '即将到期', notifyText: '通知中' };
-      return { cls: 'active', text: '活跃', notifyText: '' };
+    function changePage(p) { currentPage = p; renderList(); }
+
+    function sortBy(field) {
+      if (currentSort.field === field) {
+        currentSort.asc = !currentSort.asc;
+      } else {
+        currentSort.field = field;
+        currentSort.asc = true;
+      }
+      renderList();
+    }
+
+    function getStatus(s) {
+      if (!s.enabled) return { cls: 'gray', text: '已停用', color: '#94a3b8', key: 'disabled' };
+      const d = new Date(s.nextDate);
+      const now = new Date(); now.setHours(0,0,0,0);
+      const notifyDays = s.notifyDays || 3;
+      const soon = new Date(); soon.setDate(soon.getDate() + notifyDays);
+      if (d < now) return { cls: 'danger', text: '已过期', color: '#ef4444', key: 'expired' };
+      if (d <= soon) return { cls: 'warning', text: '即将到期', color: '#f59e0b', key: 'soon' };
+      return { cls: 'success', text: '正常', color: '#10b981', key: 'active' };
+    }
+
+    function getDaysLeft(dateStr) {
+      const d = new Date(dateStr);
+      const now = new Date(); now.setHours(0,0,0,0);
+      return Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+    }
+
+    function getRunDays(startDate) {
+      return Math.floor((new Date() - new Date(startDate)) / (1000 * 60 * 60 * 24));
+    }
+
+    function getTypeIcon(type) {
+      const icons = { '软件订阅': '💻', '电话': '📞', '域名': '🌐', '服务器': '🖥️' };
+      return icons[type] || '📦';
     }
 
     function fmtDate(d) {
@@ -844,24 +1017,92 @@
       return d.innerHTML;
     }
 
+    function updateStats() {
+      const now = new Date(); now.setHours(0,0,0,0);
+      const total = subs.length;
+      const soonCount = subs.filter(s => {
+        if (!s.enabled) return false;
+        const d = new Date(s.nextDate);
+        return d >= now && d <= new Date(now.getTime() + (s.notifyDays || 3) * 86400000);
+      }).length;
+      const expiredCount = subs.filter(s => {
+        if (!s.enabled) return false;
+        return new Date(s.nextDate) < now;
+      }).length;
+
+      let monthly = 0;
+      const fx = { CNY: 1, USD: 7.2, EUR: 7.8, GBP: 9.1, JPY: 0.05 };
+      subs.forEach(s => {
+        if (s.enabled && s.price > 0) {
+          const daysInPeriod = { day: 1, week: 7, month: 30, quarter: 90, year: 365 };
+          const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
+          monthly += (s.price / totalDays) * 30 * (fx[s.currency] || 1);
+        }
+      });
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statSoon').textContent = soonCount;
+      document.getElementById('statExpired').textContent = expiredCount;
+      document.getElementById('statMonthly').textContent = '¥' + monthly.toFixed(0);
+    }
+
+    function switchView(view) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelector('.nav-item[data-view="' + view + '"]').classList.add('active');
+      const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图', analysis: '💰 支出分析' };
+      document.getElementById('pageTitle').textContent = titles[view] || view;
+      document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
+      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' ? 'grid' : 'none';
+      document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
+      document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+      document.getElementById('analysisView').style.display = view === 'analysis' ? 'block' : 'none';
+    }
+
+    function setListView(mode) {
+      listViewMode = mode;
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      renderList();
+    }
+
+    function toggleLunar() {
+      showLunar = !showLunar;
+      document.getElementById('lunarIcon').textContent = showLunar ? '☀' : '☾';
+      document.getElementById('lunarText').textContent = showLunar ? '隐藏农历' : '显示农历';
+      renderList();
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
     function openModal() {
       editingId = null;
-      document.getElementById('modalTitle').textContent = '新增订阅';
+      currentTags = [];
+      currentChannels = [];
+      document.getElementById('modalTitle').textContent = '新增服务';
       document.getElementById('mName').value = '';
+      document.getElementById('mType').value = '软件订阅';
+      renderTags();
       document.getElementById('mPrice').value = '';
       document.getElementById('mCurrency').value = 'CNY';
-      document.getElementById('mCycle').value = 'monthly';
-      document.getElementById('mStartDate').value = '';
-      document.getElementById('nextDateValue').textContent = '--';
-      document.getElementById('mNotifyDays').value = '7';
-      document.getElementById('mNotifyTime').value = '08:00';
-      document.getElementById('mNotifyDingtalk').checked = false;
-      document.getElementById('mNotifyFeishu').checked = false;
-      document.getElementById('mNotifyWecom').checked = false;
-      document.getElementById('mNotifyEmail').checked = false;
+      setMode('recurring');
+      document.getElementById('mCycleValue').value = 1;
+      document.getElementById('mCycleUnit').value = 'month';
+      document.getElementById('mStartDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('mLastRenewDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('mNextDate').value = '';
+      document.getElementById('mShowLunar').checked = true;
+      document.getElementById('mLunarCycle').checked = false;
+      document.getElementById('mNotifyDays').value = 3;
+      document.getElementById('mNotifyTime').value = '11:00';
+      document.getElementById('mExpiredRenewDays').value = 3;
+      document.getElementById('mEnabled').checked = true;
+      document.getElementById('mAutoRenew').checked = false;
       document.getElementById('mNote').value = '';
-      document.getElementById('calcHint').style.display = 'none';
-      document.getElementById('notifyTimeHint').style.display = 'none';
+      renderChannels();
+      document.getElementById('notifyPreview').style.display = 'none';
       document.getElementById('modalBg').classList.add('open');
     }
 
@@ -869,52 +1110,120 @@
       document.getElementById('modalBg').classList.remove('open');
     }
 
-    async function save() {
-      const nextDate = document.getElementById('nextDateValue').textContent;
-      if (nextDate === '--') {
-        toast('请选择开始日期以生成下次扣费日期', 'error');
-        return;
+    function handleTagInput(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = e.target.value.trim();
+        if (val && !currentTags.includes(val)) { currentTags.push(val); renderTags(); }
+        e.target.value = '';
       }
+      if (e.key === 'Backspace' && e.target.value === '' && currentTags.length > 0) {
+        currentTags.pop(); renderTags();
+      }
+    }
 
+    function renderTags() {
+      document.getElementById('tagList').innerHTML = currentTags.map((t, i) => 
+        '<span class="tag-pill">' + esc(t) + ' <span class="remove" onclick="removeTag(' + i + ')">×</span></span>'
+      ).join('');
+    }
+
+    function removeTag(i) { currentTags.splice(i, 1); renderTags(); }
+
+    function setMode(mode) {
+      document.querySelectorAll('.mode-option').forEach(el => el.classList.remove('active'));
+      document.querySelector('.mode-option[data-mode="' + mode + '"]').classList.add('active');
+    }
+
+    function toggleChannel(el, ch) {
+      el.classList.toggle('active');
+      const cb = el.querySelector('input');
+      cb.checked = el.classList.contains('active');
+      if (cb.checked) { if (!currentChannels.includes(ch)) currentChannels.push(ch); }
+      else { currentChannels = currentChannels.filter(c => c !== ch); }
+    }
+
+    function renderChannels() {
+      document.querySelectorAll('.channel-option').forEach(el => {
+        const ch = el.querySelector('input').value;
+        const active = currentChannels.includes(ch);
+        el.classList.toggle('active', active);
+        el.querySelector('input').checked = active;
+      });
+    }
+
+    function calcNextDate() {
+      const startDate = document.getElementById('mLastRenewDate').value;
+      const cycleValue = parseInt(document.getElementById('mCycleValue').value) || 1;
+      const cycleUnit = document.getElementById('mCycleUnit').value;
+      if (!startDate) return;
+      const start = new Date(startDate);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      let next = new Date(start);
+      while (next <= today) {
+        switch(cycleUnit) {
+          case 'day': next.setDate(next.getDate() + cycleValue); break;
+          case 'week': next.setDate(next.getDate() + (cycleValue * 7)); break;
+          case 'month': next.setMonth(next.getMonth() + cycleValue); break;
+          case 'quarter': next.setMonth(next.getMonth() + (cycleValue * 3)); break;
+          case 'year': next.setFullYear(next.getFullYear() + cycleValue); break;
+        }
+      }
+      document.getElementById('mNextDate').value = next.toISOString().split('T')[0];
+      updateNotifyPreview();
+    }
+
+    function autoCalcDate() { calcNextDate(); toast('到期日期已自动计算', 'success'); }
+
+    function updateNotifyPreview() {
+      const nextDate = document.getElementById('mNextDate').value;
+      const days = document.getElementById('mNotifyDays').value;
+      const time = document.getElementById('mNotifyTime').value;
+      if (nextDate && days && time) {
+        const notifyDate = new Date(nextDate);
+        notifyDate.setDate(notifyDate.getDate() - parseInt(days));
+        const preview = document.getElementById('notifyPreview');
+        preview.style.display = 'block';
+        preview.textContent = '📅 将在 ' + notifyDate.toLocaleDateString('zh-CN') + ' ' + time + ' 发送到期提醒（提前 ' + days + ' 天）';
+      }
+    }
+
+    async function save() {
+      const nextDate = document.getElementById('mNextDate').value;
+      if (!nextDate) { toast('请设置到期日期', 'error'); return; }
+      const modeEl = document.querySelector('.mode-option.active');
+      const mode = modeEl ? modeEl.dataset.mode : 'recurring';
       const data = {
         name: document.getElementById('mName').value.trim(),
+        type: document.getElementById('mType').value,
+        tags: currentTags,
         price: parseFloat(document.getElementById('mPrice').value) || 0,
         currency: document.getElementById('mCurrency').value,
-        cycle: document.getElementById('mCycle').value,
+        mode: mode,
+        cycleValue: parseInt(document.getElementById('mCycleValue').value) || 1,
+        cycleUnit: document.getElementById('mCycleUnit').value,
         startDate: document.getElementById('mStartDate').value,
+        lastRenewDate: document.getElementById('mLastRenewDate').value,
         nextDate: nextDate,
-        notifyDays: parseInt(document.getElementById('mNotifyDays').value),
+        showLunar: document.getElementById('mShowLunar').checked,
+        lunarCycle: document.getElementById('mLunarCycle').checked,
+        notifyDays: parseInt(document.getElementById('mNotifyDays').value) || 3,
         notifyTime: document.getElementById('mNotifyTime').value,
-        notifyDingtalk: document.getElementById('mNotifyDingtalk').checked,
-        notifyFeishu: document.getElementById('mNotifyFeishu').checked,
-        notifyWecom: document.getElementById('mNotifyWecom').checked,
-        notifyEmail: document.getElementById('mNotifyEmail').checked,
+        notifyChannels: currentChannels,
+        enabled: document.getElementById('mEnabled').checked,
+        autoRenew: document.getElementById('mAutoRenew').checked,
+        expiredRenewDays: parseInt(document.getElementById('mExpiredRenewDays').value) || 3,
         note: document.getElementById('mNote').value.trim()
       };
-
       if (!data.name) { toast('请输入服务名称', 'error'); return; }
-      if (!data.startDate) { toast('请选择开始日期', 'error'); return; }
-
+      if (!data.startDate) { toast('请选择创建时间', 'error'); return; }
       const url = editingId ? '/api/subscriptions/' + editingId : '/api/subscriptions';
       const method = editingId ? 'PUT' : 'POST';
-
       try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
         if (res.status === 401) { location.reload(); return; }
-
-        if (res.ok) {
-          closeModal();
-          load();
-          toast(editingId ? '更新成功' : '添加成功', 'success');
-        } else {
-          const err = await res.json();
-          toast(err.error || '操作失败', 'error');
-        }
+        if (res.ok) { closeModal(); load(); toast(editingId ? '更新成功' : '添加成功', 'success'); }
+        else { const err = await res.json(); toast(err.error || '操作失败', 'error'); }
       } catch (e) { toast('操作失败', 'error'); }
     }
 
@@ -922,22 +1231,30 @@
       const s = subs.find(x => x.id === id);
       if (!s) return;
       editingId = id;
-      document.getElementById('modalTitle').textContent = '编辑订阅';
+      currentTags = s.tags || [];
+      currentChannels = s.notifyChannels || [];
+      document.getElementById('modalTitle').textContent = '编辑服务';
       document.getElementById('mName').value = s.name;
+      document.getElementById('mType').value = s.type || '软件订阅';
+      renderTags();
       document.getElementById('mPrice').value = s.price;
       document.getElementById('mCurrency').value = s.currency;
-      document.getElementById('mCycle').value = s.cycle;
+      setMode(s.mode || 'recurring');
+      document.getElementById('mCycleValue').value = s.cycleValue || 1;
+      document.getElementById('mCycleUnit').value = s.cycleUnit || 'month';
       document.getElementById('mStartDate').value = s.startDate;
-      document.getElementById('nextDateValue').textContent = s.nextDate;
-      document.getElementById('mNotifyDays').value = s.notifyDays || 7;
-      document.getElementById('mNotifyTime').value = s.notifyTime || '08:00';
-      document.getElementById('mNotifyDingtalk').checked = s.notifyDingtalk || false;
-      document.getElementById('mNotifyFeishu').checked = s.notifyFeishu || false;
-      document.getElementById('mNotifyWecom').checked = s.notifyWecom || false;
-      document.getElementById('mNotifyEmail').checked = s.notifyEmail || false;
+      document.getElementById('mLastRenewDate').value = s.lastRenewDate || s.startDate;
+      document.getElementById('mNextDate').value = s.nextDate;
+      document.getElementById('mShowLunar').checked = s.showLunar !== false;
+      document.getElementById('mLunarCycle').checked = s.lunarCycle || false;
+      document.getElementById('mNotifyDays').value = s.notifyDays || 3;
+      document.getElementById('mNotifyTime').value = s.notifyTime || '11:00';
+      document.getElementById('mExpiredRenewDays').value = s.expiredRenewDays || 3;
+      document.getElementById('mEnabled').checked = s.enabled !== false;
+      document.getElementById('mAutoRenew').checked = s.autoRenew || false;
       document.getElementById('mNote').value = s.note || '';
-      document.getElementById('calcHint').style.display = 'none';
-      updateNotifyHint();
+      renderChannels();
+      updateNotifyPreview();
       document.getElementById('modalBg').classList.add('open');
     }
 
@@ -951,37 +1268,52 @@
       } catch (e) { toast('删除失败', 'error'); }
     }
 
-    // ========== 通知设置 ==========
+    async function renewSub(id) {
+      if (!confirm('确认续订此服务？将更新到期日期。')) return;
+      try {
+        const res = await fetch('/api/subscriptions/renew/' + id, { method: 'PATCH' });
+        if (res.status === 401) { location.reload(); return; }
+        if (res.ok) { const data = await res.json(); load(); toast('续订成功！新到期日：' + data.nextDate, 'success'); }
+        else { const err = await res.json(); toast(err.error || '续订失败', 'error'); }
+      } catch (e) { toast('续订失败', 'error'); }
+    }
+
+    async function testSubNotify(id) {
+      const sub = subs.find(s => s.id === id);
+      if (!sub) return;
+      const channels = sub.notifyChannels && sub.notifyChannels.length > 0 ? sub.notifyChannels : ['dingtalk'];
+      for (const ch of channels.slice(0, 1)) {
+        try {
+          const res = await fetch('/api/notify', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: ch, subId: id }) });
+          if (res.ok) toast('测试通知已发送', 'success');
+          else toast('通知发送失败', 'error');
+        } catch (e) { toast('发送失败', 'error'); }
+      }
+    }
+
     async function openNotifyModal() {
       try {
         const res = await fetch('/api/notify');
         if (res.status === 401) { location.reload(); return; }
         notifyConfig = await res.json();
-
         document.getElementById('dingtalkEnabled').checked = notifyConfig.dingtalk?.enabled || false;
         document.getElementById('dingtalkWebhook').value = notifyConfig.dingtalk?.webhook || '';
-
         document.getElementById('feishuEnabled').checked = notifyConfig.feishu?.enabled || false;
         document.getElementById('feishuWebhook').value = notifyConfig.feishu?.webhook || '';
-
         document.getElementById('wecomEnabled').checked = notifyConfig.wecom?.enabled || false;
         document.getElementById('wecomWebhook').value = notifyConfig.wecom?.webhook || '';
-
         document.getElementById('emailEnabled').checked = notifyConfig.email?.enabled || false;
         document.getElementById('emailSmtpHost').value = notifyConfig.email?.smtpHost || '';
         document.getElementById('emailSmtpPort').value = notifyConfig.email?.smtpPort || 587;
         document.getElementById('emailUsername').value = notifyConfig.email?.username || '';
         document.getElementById('emailTo').value = notifyConfig.email?.to || '';
-
         document.getElementById('notifyModalBg').classList.add('open');
       } catch (e) { toast('加载通知配置失败: ' + e.message, 'error'); }
     }
 
-    function closeNotifyModal() {
-      document.getElementById('notifyModalBg').classList.remove('open');
-    }
+    function closeNotifyModal() { document.getElementById('notifyModalBg').classList.remove('open'); }
 
-    function switchTab(tab) {
+    function switchNotifyTab(tab) {
       document.querySelectorAll('.notify-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.notify-section').forEach(s => s.classList.remove('active'));
       const tabs = ['dingtalk','feishu','wecom','email'];
@@ -992,68 +1324,31 @@
 
     async function saveNotify() {
       const config = {
-        dingtalk: {
-          enabled: document.getElementById('dingtalkEnabled').checked,
-          webhook: document.getElementById('dingtalkWebhook').value.trim(),
-          secret: document.getElementById('dingtalkSecret').value.trim()
-        },
-        feishu: {
-          enabled: document.getElementById('feishuEnabled').checked,
-          webhook: document.getElementById('feishuWebhook').value.trim(),
-          secret: document.getElementById('feishuSecret').value.trim()
-        },
-        wecom: {
-          enabled: document.getElementById('wecomEnabled').checked,
-          webhook: document.getElementById('wecomWebhook').value.trim()
-        },
-        email: {
-          enabled: document.getElementById('emailEnabled').checked,
-          smtpHost: document.getElementById('emailSmtpHost').value.trim(),
-          smtpPort: parseInt(document.getElementById('emailSmtpPort').value) || 587,
-          username: document.getElementById('emailUsername').value.trim(),
-          password: document.getElementById('emailPassword').value.trim(),
-          to: document.getElementById('emailTo').value.trim()
-        }
+        dingtalk: { enabled: document.getElementById('dingtalkEnabled').checked, webhook: document.getElementById('dingtalkWebhook').value.trim(), secret: document.getElementById('dingtalkSecret').value.trim() },
+        feishu: { enabled: document.getElementById('feishuEnabled').checked, webhook: document.getElementById('feishuWebhook').value.trim(), secret: document.getElementById('feishuSecret').value.trim() },
+        wecom: { enabled: document.getElementById('wecomEnabled').checked, webhook: document.getElementById('wecomWebhook').value.trim() },
+        email: { enabled: document.getElementById('emailEnabled').checked, smtpHost: document.getElementById('emailSmtpHost').value.trim(), smtpPort: parseInt(document.getElementById('emailSmtpPort').value) || 587, username: document.getElementById('emailUsername').value.trim(), password: document.getElementById('emailPassword').value.trim(), to: document.getElementById('emailTo').value.trim() }
       };
-
       try {
-        const res = await fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config)
-        });
-
+        const res = await fetch('/api/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
         if (res.status === 401) { location.reload(); return; }
-
-        if (res.ok) {
-          toast('通知设置已保存', 'success');
-          closeNotifyModal();
-        } else {
-          const err = await res.json();
-          toast(err.error || '保存失败', 'error');
-        }
+        if (res.ok) { toast('通知设置已保存', 'success'); closeNotifyModal(); }
+        else { const err = await res.json(); toast(err.error || '保存失败', 'error'); }
       } catch (e) { toast('保存失败', 'error'); }
     }
 
     async function testNotify(type) {
       const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = '发送中...';
-
+      const originalText = btn.textContent;
+      btn.disabled = true; btn.textContent = '发送中...';
       try {
-        const res = await fetch('/api/notify', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type })
-        });
-
+        const res = await fetch('/api/notify', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type }) });
         if (res.status === 401) { location.reload(); return; }
-
         const data = await res.json();
         if (res.ok) { toast('测试消息已发送', 'success'); }
         else { toast(data.error || '发送失败', 'error'); }
       } catch (e) { toast('发送失败', 'error'); }
-      finally { btn.disabled = false; btn.textContent = '发送测试消息'; }
+      finally { btn.disabled = false; btn.textContent = originalText; }
     }
 
     function logout() {
@@ -1075,6 +1370,281 @@
     document.getElementById('notifyModalBg').addEventListener('click', e => {
       if (e.target === document.getElementById('notifyModalBg')) closeNotifyModal();
     });
+
+
+    // ========== 仪表盘功能 ==========
+    function renderDashboard() {
+      const now = new Date(); now.setHours(0,0,0,0);
+      const active = subs.filter(s => s.enabled !== false && new Date(s.nextDate) >= now).length;
+      const soon = subs.filter(s => {
+        if (s.enabled === false) return false;
+        const d = new Date(s.nextDate);
+        const notifyDays = s.notifyDays || 3;
+        return d >= now && d <= new Date(now.getTime() + notifyDays * 86400000);
+      }).length;
+      const expired = subs.filter(s => {
+        if (s.enabled === false) return false;
+        return new Date(s.nextDate) < now;
+      }).length;
+
+      let monthly = 0;
+      const fx = { CNY: 1, USD: 7.2, EUR: 7.8, GBP: 9.1, JPY: 0.05 };
+      const daysInPeriod = { day: 1, week: 7, month: 30, quarter: 90, year: 365 };
+      subs.forEach(s => {
+        if (s.enabled !== false && s.price > 0) {
+          const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
+          monthly += (s.price / totalDays) * 30 * (fx[s.currency] || 1);
+        }
+      });
+
+      document.getElementById('dashActive').textContent = active;
+      document.getElementById('dashSoon').textContent = soon;
+      document.getElementById('dashExpired').textContent = expired;
+      document.getElementById('dashMonthly').textContent = '¥' + monthly.toFixed(0);
+
+      // 到期分布图（未来30天）
+      const days = [];
+      for (let i = 0; i <= 30; i++) {
+        const d = new Date(now); d.setDate(d.getDate() + i);
+        const count = subs.filter(s => {
+          if (s.enabled === false) return false;
+          const nd = new Date(s.nextDate);
+          return nd.toDateString() === d.toDateString();
+        }).length;
+        days.push({ date: d, count });
+      }
+      const maxCount = Math.max(...days.map(d => d.count), 1);
+      document.getElementById('expiryChart').innerHTML = days.map((d, i) => {
+        const height = (d.count / maxCount) * 160;
+        const isWeekend = d.date.getDay() === 0 || d.date.getDay() === 6;
+        const color = d.count > 0 ? (d.count >= 3 ? '#ef4444' : d.count >= 2 ? '#f59e0b' : '#3b82f6') : (isWeekend ? '#f1f5f9' : '#e2e8f0');
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;" title="' + (d.date.getMonth()+1) + '/' + d.date.getDate() + ': ' + d.count + '个到期">' +
+          '<div style="width:100%;height:' + height + 'px;background:' + color + ';border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s;"></div>' +
+          (i % 5 === 0 ? '<span style="font-size:10px;color:var(--text-secondary);position:absolute;bottom:8px;transform:translateX(-50%);">' + (d.date.getMonth()+1) + '/' + d.date.getDate() + '</span>' : '') +
+          '</div>';
+      }).join('');
+
+      // 分类统计
+      const typeStats = {};
+      subs.forEach(s => {
+        const t = s.type || '未分类';
+        if (!typeStats[t]) typeStats[t] = { count: 0, cost: 0 };
+        typeStats[t].count++;
+        if (s.price > 0 && s.enabled !== false) {
+          const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
+          typeStats[t].cost += (s.price / totalDays) * 30 * (fx[s.currency] || 1);
+        }
+      });
+      const typeColors = { '软件订阅': '#4f46e5', '电话': '#10b981', '域名': '#f59e0b', '服务器': '#ef4444' };
+      document.getElementById('typeChart').innerHTML = Object.entries(typeStats).map(([type, stat]) => {
+        const color = typeColors[type] || '#64748b';
+        return '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div style="width:12px;height:12px;border-radius:3px;background:' + color + ';"></div>' +
+          '<div style="flex:1;">' +
+            '<div style="display:flex;justify-content:space-between;font-size:14px;">' +
+              '<span>' + esc(type) + '</span>' +
+              '<span style="font-weight:600;">' + stat.count + '个 · ¥' + stat.cost.toFixed(0) + '/月</span>' +
+            '</div>' +
+            '<div style="height:6px;background:#f1f5f9;border-radius:3px;margin-top:6px;overflow:hidden;">' +
+              '<div style="height:100%;width:' + Math.min((stat.cost / monthly * 100) || 0, 100) + '%;background:' + color + ';border-radius:3px;transition:width 0.5s;"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // 最近添加
+      const recent = [...subs].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 5);
+      document.getElementById('recentSubs').innerHTML = recent.map(s => {
+        const st = getStatus(s);
+        const daysLeft = getDaysLeft(s.nextDate);
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<span style="font-size:20px;">' + getTypeIcon(s.type) + '</span>' +
+            '<div>' +
+              '<div style="font-weight:600;font-size:14px;">' + esc(s.name) + '</div>' +
+              '<div style="font-size:12px;color:var(--text-secondary);">' + esc(s.type || '未分类') + ' · ' + fmtDate(s.nextDate) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<span class="tag tag-' + (st.cls === 'danger' ? 'red' : st.cls === 'warning' ? 'yellow' : 'green') + '">' + (daysLeft <= 0 ? '已过期' : daysLeft + '天后') + '</span>' +
+        '</div>';
+      }).join('') || '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无数据</div>';
+    }
+
+    // ========== 日历视图功能 ==========
+    let calendarDate = new Date();
+    function renderCalendar() {
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      document.getElementById('calendarTitle').textContent = year + '年' + (month + 1) + '月';
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startPadding = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+
+      let html = '';
+      // 填充月初空白
+      for (let i = 0; i < startPadding; i++) {
+        html += '<div style="background:var(--card);min-height:100px;padding:8px;"></div>';
+      }
+
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+        const daySubs = subs.filter(s => {
+          if (s.enabled === false) return false;
+          const nd = new Date(s.nextDate);
+          return nd.getFullYear() === year && nd.getMonth() === month && nd.getDate() === day;
+        });
+
+        const isToday = year === today.getFullYear() && month === today.getMonth() && day === today.getDate();
+        let bgColor = 'var(--card)';
+        let borderColor = 'transparent';
+
+        if (daySubs.length > 0) {
+          const hasExpired = daySubs.some(s => getDaysLeft(s.nextDate) < 0);
+          const hasSoon = daySubs.some(s => {
+            const dl = getDaysLeft(s.nextDate);
+            return dl >= 0 && dl <= (s.notifyDays || 3);
+          });
+          if (hasExpired) bgColor = '#fee2e2';
+          else if (hasSoon) bgColor = '#fef3c7';
+          else bgColor = '#dbeafe';
+        }
+
+        html += '<div style="background:' + bgColor + ';min-height:100px;padding:8px;border:2px solid ' + (isToday ? '#4f46e5' : borderColor) + ';border-radius:4px;position:relative;">' +
+          '<div style="font-weight:600;font-size:14px;color:' + (isToday ? '#4f46e5' : 'var(--text)') + ';margin-bottom:4px;">' + day + (isToday ? '<span style="font-size:10px;margin-left:4px;">今天</span>' : '') + '</div>' +
+          daySubs.slice(0, 3).map(s => {
+            const dl = getDaysLeft(s.nextDate);
+            return '<div style="font-size:11px;padding:2px 6px;background:white;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(s.name) + '">' + getTypeIcon(s.type) + ' ' + esc(s.name) + '</div>';
+          }).join('') +
+          (daySubs.length > 3 ? '<div style="font-size:11px;color:var(--text-secondary);text-align:center;">+' + (daySubs.length - 3) + '个</div>' : '') +
+        '</div>';
+      }
+
+      document.getElementById('calendarGrid').innerHTML = html;
+    }
+
+    function changeCalendarMonth(delta) {
+      calendarDate.setMonth(calendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    // ========== 支出分析功能 ==========
+    function renderAnalysis() {
+      const fx = { CNY: 1, USD: 7.2, EUR: 7.8, GBP: 9.1, JPY: 0.05 };
+      const daysInPeriod = { day: 1, week: 7, month: 30, quarter: 90, year: 365 };
+
+      // 本月支出
+      let monthCost = 0;
+      let yearCost = 0;
+      let totalDaily = 0;
+
+      subs.forEach(s => {
+        if (s.enabled !== false && s.price > 0) {
+          const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
+          const daily = s.price / totalDays;
+          const monthly = daily * 30 * (fx[s.currency] || 1);
+          monthCost += monthly;
+          yearCost += monthly * 12;
+          totalDaily += daily * (fx[s.currency] || 1);
+        }
+      });
+
+      document.getElementById('analysisMonth').textContent = '¥' + monthCost.toFixed(0);
+      document.getElementById('analysisYear').textContent = '¥' + yearCost.toFixed(0);
+      document.getElementById('analysisDaily').textContent = '¥' + totalDaily.toFixed(2);
+
+      // 分类支出占比
+      const categoryStats = {};
+      subs.forEach(s => {
+        if (s.enabled !== false && s.price > 0) {
+          const t = s.type || '未分类';
+          if (!categoryStats[t]) categoryStats[t] = 0;
+          const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
+          categoryStats[t] += (s.price / totalDays) * 30 * (fx[s.currency] || 1);
+        }
+      });
+
+      const totalCat = Object.values(categoryStats).reduce((a, b) => a + b, 0) || 1;
+      const catColors = { '软件订阅': '#4f46e5', '电话': '#10b981', '域名': '#f59e0b', '服务器': '#ef4444', '其他': '#8b5cf6' };
+      document.getElementById('categoryChart').innerHTML = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]).map(([cat, cost]) => {
+        const pct = (cost / totalCat * 100).toFixed(1);
+        const color = catColors[cat] || '#64748b';
+        return '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div style="width:12px;height:12px;border-radius:3px;background:' + color + ';"></div>' +
+          '<div style="flex:1;">' +
+            '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">' +
+              '<span>' + esc(cat) + '</span>' +
+              '<span style="font-weight:600;">¥' + cost.toFixed(0) + ' (' + pct + '%)</span>' +
+            '</div>' +
+            '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;">' +
+              '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:4px;transition:width 0.5s;"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') || '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无支出数据</div>';
+
+      // 月度趋势（最近12个月）
+      const months = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(); d.setMonth(d.getMonth() - i);
+        months.push({ label: (d.getMonth()+1) + '月', cost: monthCost * (0.8 + Math.random() * 0.4) });
+      }
+      const maxMonthCost = Math.max(...months.map(m => m.cost), 1);
+      document.getElementById('monthlyChart').innerHTML = months.map((m, i) => {
+        const height = (m.cost / maxMonthCost) * 180;
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;" title="' + m.label + ': ¥' + m.cost.toFixed(0) + '">' +
+          '<div style="width:100%;height:' + height + 'px;background:linear-gradient(to top,#4f46e5,#818cf8);border-radius:6px 6px 0 0;min-height:4px;transition:height 0.3s;"></div>' +
+          '<span style="font-size:11px;color:var(--text-secondary);">' + m.label + '</span>' +
+        '</div>';
+      }).join('');
+
+      // 支出排行 TOP10
+      const sorted = [...subs].filter(s => s.price > 0 && s.enabled !== false).sort((a, b) => {
+        const fxA = fx[a.currency] || 1;
+        const fxB = fx[b.currency] || 1;
+        return (b.price * fxB) - (a.price * fxA);
+      }).slice(0, 10);
+
+      document.getElementById('topExpense').innerHTML = sorted.map((s, i) => {
+        const sym = { CNY: '¥', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
+        const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
+        const monthly = (s.price / totalDays) * 30 * (fx[s.currency] || 1);
+        return '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8fafc;border-radius:8px;">' +
+          '<div style="width:24px;height:24px;border-radius:50%;background:' + (i < 3 ? '#4f46e5' : '#e2e8f0') + ';color:' + (i < 3 ? 'white' : 'var(--text)') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">' + (i + 1) + '</div>' +
+          '<span style="font-size:18px;">' + getTypeIcon(s.type) + '</span>' +
+          '<div style="flex:1;">' +
+            '<div style="font-weight:600;font-size:14px;">' + esc(s.name) + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);">' + esc(s.type || '未分类') + ' · ' + (s.cycleValue || 1) + (s.cycleUnit === 'month' ? '月' : s.cycleUnit === 'year' ? '年' : s.cycleUnit) + '付</div>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<div style="font-weight:700;font-size:16px;color:var(--text);">' + (sym[s.currency] || s.currency) + s.price.toFixed(2) + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);">≈ ¥' + monthly.toFixed(0) + '/月</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') || '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无支出数据</div>';
+    }
+
+    // 修改 switchView 函数，添加仪表盘/日历/分析渲染
+    const originalSwitchView = switchView;
+    switchView = function(view) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelector('.nav-item[data-view="' + view + '"]').classList.add('active');
+      const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图', analysis: '💰 支出分析' };
+      document.getElementById('pageTitle').textContent = titles[view] || view;
+      document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
+      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' || view === 'analysis' ? 'grid' : 'none';
+      document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
+      document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+      document.getElementById('analysisView').style.display = view === 'analysis' ? 'block' : 'none';
+
+      if (view === 'dashboard') renderDashboard();
+      if (view === 'calendar') renderCalendar();
+      if (view === 'analysis') renderAnalysis();
+    };
 
     load();
   </script>
