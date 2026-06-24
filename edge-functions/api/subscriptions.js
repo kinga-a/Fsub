@@ -36,8 +36,6 @@ export async function onRequestPost(context) {
       startDate: body.startDate,
       lastRenewDate: body.lastRenewDate || body.startDate,
       nextDate: body.nextDate,
-      showLunar: body.showLunar !== false,
-      lunarCycle: body.lunarCycle || false,
       notifyDays: parseInt(body.notifyDays) || 3,
       notifyTime: body.notifyTime || '11:00',
       notifyChannels: body.notifyChannels || [],
