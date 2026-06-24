@@ -874,7 +874,7 @@
         </div>
         <div class="topbar-actions">
           <button class="btn btn-primary" onclick="openModal()">
-            <span>+</span> 新增服务
+            <span>+</span> 新增订阅
           </button>
         </div>
       </div>
@@ -933,7 +933,7 @@
         <div class="empty" id="emptyState">
           <div style="font-size:48px;margin-bottom:16px;">📭</div>
           <h3>暂无订阅</h3>
-          <p>点击右上角「新增服务」添加你的第一个订阅</p>
+          <p>点击右上角「新增订阅」添加你的第一个订阅</p>
         </div>
         <table id="subTable" style="display:none;">
           <thead>
@@ -1081,7 +1081,7 @@
   <div class="modal-bg" id="modalBg">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">新增服务</h3>
+        <h3 id="modalTitle">新增订阅</h3>
         <button class="close-btn" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
@@ -1586,7 +1586,7 @@
       editingId = null;
       currentTags = [];
       currentChannels = [];
-      document.getElementById('modalTitle').textContent = '新增服务';
+      document.getElementById('modalTitle').textContent = '新增订阅';
       document.getElementById('mName').value = '';
       document.getElementById('mType').value = '软件订阅';
       renderTags();
