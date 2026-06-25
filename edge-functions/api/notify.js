@@ -125,14 +125,12 @@ export async function onRequestPut(context) {
   }
 }
 
-// ========== Cron 定时通知（带漏发补发兜底） ==========
+// ========== Cron 定时通知（适配任意触发时间） ==========
 async function handleCron(context) {
   try {
     const subs = await SUB_KV.get('subscriptions', 'json') || [];
     const config = await SUB_KV.get('notify_config', 'json') || {};
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
     const todayStr = now.toISOString().split('T')[0];
 
     let sent = 0;
@@ -159,19 +157,7 @@ async function handleCron(context) {
         continue;
       }
 
-      // 时间匹配：±30 分钟容错（解决 Cron 调度时间与设置时间不匹配的问题）
-      const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
-      const currentTotalMinutes = currentHour * 60 + currentMinute;
-      const notifyTotalMinutes = notifyHour * 60 + notifyMinute;
-      const timeDiff = Math.abs(currentTotalMinutes - notifyTotalMinutes);
-
-      if (timeDiff > 30) {
-        skipped++;
-        continue;
-      }
-
-      // ========== 漏发补发检查 ==========
-      // 先检查今天是否已经通知过（避免重复发送）
+      // 检查今天是否已经通知过（避免重复发送）
       const todayKey = `notified_${sub.id}_${todayStr}`;
       const alreadyNotifiedToday = await SUB_KV.get(todayKey);
       if (alreadyNotifiedToday) {
@@ -179,7 +165,7 @@ async function handleCron(context) {
         continue;
       }
 
-      // 今天没发过，检查从 notifyDate 到今天是否有漏发
+      // 检查从 notifyDate 到今天是否有漏发
       let shouldSend = false;
       let missedDays = [];
       const checkStart = new Date(notifyDateStart);
@@ -240,7 +226,7 @@ async function handleCron(context) {
         }
       }
 
-      // 标记今天已通知（同时补标所有漏发日期，避免明天重复兜底）
+      // 标记所有漏发日期
       for (const dayStr of missedDays) {
         const dayKey = `notified_${sub.id}_${dayStr}`;
         await SUB_KV.put(dayKey, '1', { expirationTtl: 86400 * 7 });
