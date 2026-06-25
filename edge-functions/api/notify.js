@@ -28,6 +28,15 @@ export async function onRequestPost(context) {
     return handleCron(context);
   }
 
+  if (apiKey && apiKey !== cronToken) {
+    return json({ 
+      error: 'X-API-Key 错误', 
+      message: '提供的 API Key 与系统配置的 CRON_TOKEN 不匹配，请检查环境变量或请求头',
+      provided: apiKey.substring(0, 4) + '****',
+      expectedPrefix: cronToken.substring(0, 4) + '****'
+    }, 401);
+  }
+
   try {
     const body = await request.json();
     const existing = await SUB_KV.get('notify_config', 'json') || {};
@@ -150,15 +159,27 @@ async function handleCron(context) {
         continue;
       }
 
-      // 时间匹配：允许前后5分钟容错
+      // 时间匹配：±30 分钟容错（解决 Cron 调度时间与设置时间不匹配的问题）
       const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
-      if (currentHour !== notifyHour || currentMinute > 5) {
+      const currentTotalMinutes = currentHour * 60 + currentMinute;
+      const notifyTotalMinutes = notifyHour * 60 + notifyMinute;
+      const timeDiff = Math.abs(currentTotalMinutes - notifyTotalMinutes);
+
+      if (timeDiff > 30) {
         skipped++;
         continue;
       }
 
       // ========== 漏发补发检查 ==========
-      // 检查从 notifyDate 到今天的每一天，看是否有漏发
+      // 先检查今天是否已经通知过（避免重复发送）
+      const todayKey = `notified_${sub.id}_${todayStr}`;
+      const alreadyNotifiedToday = await SUB_KV.get(todayKey);
+      if (alreadyNotifiedToday) {
+        skipped++;
+        continue;
+      }
+
+      // 今天没发过，检查从 notifyDate 到今天是否有漏发
       let shouldSend = false;
       let missedDays = [];
       const checkStart = new Date(notifyDateStart);
@@ -179,7 +200,7 @@ async function handleCron(context) {
         continue;
       }
 
-      // 构建消息（如果有补发，标注出来）
+      // 构建消息
       let content = `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`;
       if (missedDays.length > 1) {
         content += `\n\n⚠️ 检测到 ${missedDays.length - 1} 天漏发，已兜底补发`;
@@ -219,9 +240,11 @@ async function handleCron(context) {
         }
       }
 
-      // 标记今天已通知（用今天的 key，避免今天重复发，但明天还会检查补发）
-      const todayKey = `notified_${sub.id}_${todayStr}`;
-      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 * 7 });
+      // 标记今天已通知（同时补标所有漏发日期，避免明天重复兜底）
+      for (const dayStr of missedDays) {
+        const dayKey = `notified_${sub.id}_${dayStr}`;
+        await SUB_KV.put(dayKey, '1', { expirationTtl: 86400 * 7 });
+      }
 
       sent++;
       results.push({
