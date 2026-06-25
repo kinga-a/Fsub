@@ -20,10 +20,12 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  const url = new URL(request.url);
 
-  // 根据路径判断：/api/notify-cron 是定时任务，/api/notify 是保存配置
-  if (url.pathname === '/api/notify-cron' || url.pathname.endsWith('/notify-cron')) {
+  // 检查是否是 Cron 触发（通过 X-API-Key）
+  const apiKey = request.headers.get('X-API-Key') || '';
+  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
+
+  if (apiKey === cronToken) {
     return handleCron(context);
   }
 
@@ -118,14 +120,7 @@ export async function onRequestPut(context) {
 
 // ========== Cron 定时通知 ==========
 async function handleCron(context) {
-  const { request, env } = context;
-
-  // 验证 Cron 密钥（防止被恶意调用）
-  const authHeader = request.headers.get('Authorization') || '';
-  const cronToken = env.CRON_TOKEN || 'your-cron-secret';
-  if (!authHeader.includes(cronToken)) {
-    return json({ error: 'Unauthorized' }, 401);
-  }
+  const { env } = context;
 
   try {
     const subs = await SUB_KV.get('subscriptions', 'json') || [];
@@ -158,7 +153,7 @@ async function handleCron(context) {
         continue;
       }
 
-      // 时间匹配：允许前后5分钟容错（与之前可用版本一致）
+      // 时间匹配：允许前后5分钟容错
       const [notifyHour, notifyMinute] = (sub.notifyTime || '11:00').split(':').map(Number);
       if (currentHour !== notifyHour || currentMinute > 5) {
         skipped++;
@@ -189,6 +184,7 @@ async function handleCron(context) {
         if (sub.notifyEmail) channels.push('email');
       }
 
+      // 如果没有指定渠道，默认使用所有已启用的渠道
       const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
       const channelResults = [];
 
