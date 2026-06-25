@@ -21,7 +21,6 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // 检查是否是 Cron 触发（通过 X-API-Key）
   const apiKey = request.headers.get('X-API-Key') || '';
   const cronToken = env.CRON_TOKEN || 'your-cron-secret';
 
@@ -29,7 +28,6 @@ export async function onRequestPost(context) {
     return handleCron(context);
   }
 
-  // 保存配置
   try {
     const body = await request.json();
     const existing = await SUB_KV.get('notify_config', 'json') || {};
@@ -118,16 +116,15 @@ export async function onRequestPut(context) {
   }
 }
 
-// ========== Cron 定时通知 ==========
+// ========== Cron 定时通知（带漏发补发兜底） ==========
 async function handleCron(context) {
-  const { env } = context;
-
   try {
     const subs = await SUB_KV.get('subscriptions', 'json') || [];
     const config = await SUB_KV.get('notify_config', 'json') || {};
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
+    const todayStr = now.toISOString().split('T')[0];
 
     let sent = 0;
     let skipped = 0;
@@ -147,7 +144,7 @@ async function handleCron(context) {
       const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
       const notifyDateStart = new Date(notifyDate); notifyDateStart.setHours(0,0,0,0);
 
-      // 今天是否在提醒窗口内（notifyDate <= today <= nextDate）
+      // 今天是否还在提醒窗口内（notifyDate <= today <= nextDate）
       if (todayStart < notifyDateStart || todayStart > nextDate) {
         skipped++;
         continue;
@@ -160,20 +157,40 @@ async function handleCron(context) {
         continue;
       }
 
-      // 检查今天是否已经通知过
-      const todayKey = `notified_${sub.id}_${now.toISOString().split('T')[0]}`;
-      const alreadyNotified = await SUB_KV.get(todayKey);
-      if (alreadyNotified) {
+      // ========== 漏发补发检查 ==========
+      // 检查从 notifyDate 到今天的每一天，看是否有漏发
+      let shouldSend = false;
+      let missedDays = [];
+      const checkStart = new Date(notifyDateStart);
+      const checkEnd = new Date(todayStart);
+
+      for (let d = new Date(checkStart); d <= checkEnd; d.setDate(d.getDate() + 1)) {
+        const dayStr = d.toISOString().split('T')[0];
+        const dayKey = `notified_${sub.id}_${dayStr}`;
+        const alreadyNotified = await SUB_KV.get(dayKey);
+        if (!alreadyNotified) {
+          shouldSend = true;
+          missedDays.push(dayStr);
+        }
+      }
+
+      if (!shouldSend) {
         skipped++;
         continue;
       }
 
+      // 构建消息（如果有补发，标注出来）
+      let content = `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`;
+      if (missedDays.length > 1) {
+        content += `\n\n⚠️ 检测到 ${missedDays.length - 1} 天漏发，已兜底补发`;
+      }
+
       const msg = {
         title: `🔔 ${sub.name} 即将到期`,
-        content: `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`
+        content: content
       };
 
-      // 兼容新旧字段：优先使用 notifyChannels 数组，否则回退到旧布尔字段
+      // 兼容新旧字段
       let channels = [];
       if (sub.notifyChannels && Array.isArray(sub.notifyChannels) && sub.notifyChannels.length > 0) {
         channels = sub.notifyChannels;
@@ -184,7 +201,6 @@ async function handleCron(context) {
         if (sub.notifyEmail) channels.push('email');
       }
 
-      // 如果没有指定渠道，默认使用所有已启用的渠道
       const targetChannels = channels.length > 0 ? channels : ['dingtalk', 'feishu', 'wecom', 'email'];
       const channelResults = [];
 
@@ -203,10 +219,14 @@ async function handleCron(context) {
         }
       }
 
-      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 });
+      // 标记今天已通知（用今天的 key，避免今天重复发，但明天还会检查补发）
+      const todayKey = `notified_${sub.id}_${todayStr}`;
+      await SUB_KV.put(todayKey, '1', { expirationTtl: 86400 * 7 });
+
       sent++;
       results.push({
         sub: sub.name,
+        missedDays: missedDays,
         channels: channelResults
       });
     }
