@@ -136,12 +136,19 @@ async function handleCron(context) {
     let sent = 0;
     let skipped = 0;
     const results = [];
+    const debug = [];
 
     for (const sub of subs) {
+      const subDebug = { name: sub.name, id: sub.id, checks: [] };
+
+      // 检查1: 是否启用
       if (sub.enabled === false) {
+        subDebug.checks.push({ step: 'enabled', pass: false, reason: '订阅已停用' });
         skipped++;
+        debug.push(subDebug);
         continue;
       }
+      subDebug.checks.push({ step: 'enabled', pass: true });
 
       const nextDate = new Date(sub.nextDate);
       const notifyDays = sub.notifyDays || 3;
@@ -151,21 +158,39 @@ async function handleCron(context) {
       const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
       const notifyDateStart = new Date(notifyDate); notifyDateStart.setHours(0,0,0,0);
 
-      // 今天是否还在提醒窗口内（notifyDate <= today <= nextDate）
-      if (todayStart < notifyDateStart || todayStart > nextDate) {
+      subDebug.window = {
+        notifyDate: notifyDate.toISOString().split('T')[0],
+        nextDate: nextDate.toISOString().split('T')[0],
+        today: todayStr
+      };
+
+      // 检查2: 今天是否在提醒窗口内
+      if (todayStart < notifyDateStart) {
+        subDebug.checks.push({ step: 'window', pass: false, reason: `今天(${todayStr})未到提醒开始日(${notifyDate.toISOString().split('T')[0]})` });
         skipped++;
+        debug.push(subDebug);
         continue;
       }
+      if (todayStart > nextDate) {
+        subDebug.checks.push({ step: 'window', pass: false, reason: `今天(${todayStr})已超过到期日(${nextDate.toISOString().split('T')[0]})` });
+        skipped++;
+        debug.push(subDebug);
+        continue;
+      }
+      subDebug.checks.push({ step: 'window', pass: true, reason: `在提醒窗口内: ${notifyDate.toISOString().split('T')[0]} ~ ${nextDate.toISOString().split('T')[0]}` });
 
-      // 检查今天是否已经通知过（避免重复发送）
+      // 检查3: 今天是否已经通知过
       const todayKey = `notified_${sub.id}_${todayStr}`;
       const alreadyNotifiedToday = await SUB_KV.get(todayKey);
       if (alreadyNotifiedToday) {
+        subDebug.checks.push({ step: 'today_notified', pass: false, reason: `今天(${todayStr})已发送过通知` });
         skipped++;
+        debug.push(subDebug);
         continue;
       }
+      subDebug.checks.push({ step: 'today_notified', pass: true });
 
-      // 检查从 notifyDate 到今天是否有漏发
+      // 检查4: 漏发补发检查
       let shouldSend = false;
       let missedDays = [];
       const checkStart = new Date(notifyDateStart);
@@ -182,9 +207,12 @@ async function handleCron(context) {
       }
 
       if (!shouldSend) {
+        subDebug.checks.push({ step: 'missed_check', pass: false, reason: '所有日期都已通知过' });
         skipped++;
+        debug.push(subDebug);
         continue;
       }
+      subDebug.checks.push({ step: 'missed_check', pass: true, missedDays: missedDays });
 
       // 构建消息
       let content = `服务：**${sub.name}**\n类型：**${sub.type || '未分类'}**\n下次到期：**${sub.nextDate}**\n价格：${sub.price === 0 ? '免费' : sub.price + ' ' + sub.currency}\n\n请及时处理或续费！`;
@@ -233,14 +261,17 @@ async function handleCron(context) {
       }
 
       sent++;
+      subDebug.sent = true;
+      subDebug.channelResults = channelResults;
       results.push({
         sub: sub.name,
         missedDays: missedDays,
         channels: channelResults
       });
+      debug.push(subDebug);
     }
 
-    return json({ success: true, sent, skipped, checked: subs.length, results });
+    return json({ success: true, sent, skipped, checked: subs.length, results, debug });
   } catch (e) {
     return json({ error: e.message }, 500);
   }
