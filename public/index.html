@@ -547,7 +547,7 @@
     .mode-selector { display: flex; gap: 10px; margin-bottom: 16px; }
     .mode-option {
       flex: 1;
-      padding: 14px 10px;
+      padding: 12px 8px;
       border: 2px solid var(--border);
       border-radius: 12px;
       text-align: center;
@@ -847,6 +847,9 @@
       .modal-bg { align-items: flex-end; padding: 0; }
       .modal-bg.open .modal { transform: translateY(0); }
       .modal { transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+      .modal .mode-selector { flex-direction: row; gap: 6px; }
+      .modal .mode-option { padding: 10px 4px; font-size: 12px; }
+      .modal .mode-option .icon { font-size: 16px; }
       th, td { padding: 10px 8px; font-size: 13px; }
       .actions { flex-wrap: wrap; }
       .sub-name .icon { width: 32px; height: 32px; font-size: 16px; }
@@ -874,7 +877,9 @@
     }
     @media (max-width: 480px) {
       .stat-card .value { font-size: 24px; }
-      .mode-selector { flex-direction: column; }
+      .mode-selector { flex-direction: row; gap: 6px; }
+      .mode-option { padding: 10px 6px; font-size: 12px; }
+      .mode-option .icon { font-size: 18px; margin-bottom: 4px; }
       .channel-selector { flex-direction: column; }
       .channel-option { width: 100%; justify-content: center; }
     }
