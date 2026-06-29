@@ -42,16 +42,20 @@
 ## 项目结构
 
 ```
-.
-├── index.html              # 前端主页面（单文件应用）
-├── [[default]].js          # 订阅 API：PUT/DELETE/PATCH（续订）
-├── subscriptions.js        # 订阅 API：GET/POST
-├── auth.js                 # 登录鉴权（访问码 + Token Cookie）
-├── verify.js               # Token 验证
-├── middleware.js           # 中间件：未登录拦截返回登录页
-├── notify.js               # 通知配置 & 定时通知逻辑
-├── edgeone.json            # EdgeOne Pages 构建配置 & Cron 定时任务
-└── README.md               # 本文件
+├── edge-functions/
+│    └──  api/
+│           ├── [[default]].js      # 动态路由：订阅的 PUT/DELETE/PATCH
+│           ├── auth.js             # 登录鉴权
+│           ├── notify.js           # 通知配置 & 定时通知
+│           ├── subscriptions.js    # 订阅的 GET/POST
+│           └── verify.js           # Token 验证
+│
+├── public/
+│      └── index.html          # 前端页面
+│
+├── README.md
+├── edgeone.json        # EdgeOne Pages 配置
+└── middleware.js       # 中间件（根级）
 ```
 
 ---
