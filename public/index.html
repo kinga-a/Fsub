@@ -1938,7 +1938,7 @@
       document.getElementById('dashExpired').textContent = expired;
       document.getElementById('dashMonthly').textContent = '¥' + monthly.toFixed(0);
 
-      // 到期分布图（未来30天）
+      // 到期分布折线图（未来30天）
       const days = [];
       for (let i = 0; i <= 30; i++) {
         const d = new Date(now); d.setDate(d.getDate() + i);
@@ -1950,15 +1950,39 @@
         days.push({ date: d, count });
       }
       const maxCount = Math.max(...days.map(d => d.count), 1);
-      document.getElementById('expiryChart').innerHTML = days.map((d, i) => {
-        const height = (d.count / maxCount) * 160;
-        const isWeekend = d.date.getDay() === 0 || d.date.getDay() === 6;
-        const color = d.count > 0 ? (d.count >= 3 ? '#ef4444' : d.count >= 2 ? '#d97706' : '#2563eb') : (isWeekend ? '#f1f5f9' : '#e2e8f0');
-        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;max-width:30px;" title="' + (d.date.getMonth()+1) + '/' + d.date.getDate() + ': ' + d.count + '个到期">' +
-          '<div class="chart-bar" style="width:100%;max-width:20px;height:' + height + 'px;background:' + color + ';min-height:8px;"></div>' +
-          (i % 5 === 0 ? '<span style="font-size:10px;color:var(--text-secondary);position:absolute;bottom:8px;transform:translateX(-50%);">' + (d.date.getMonth()+1) + '/' + d.date.getDate() + '</span>' : '') +
-          '</div>';
-      }).join('');
+      const chartW = 800;
+      const chartH = 180;
+      const pad = 30;
+      const graphW = chartW - pad * 2;
+      const graphH = chartH - pad * 2;
+
+      let pathPts = [];
+      let areaPts = [];
+      let dots = [];
+      let labels = [];
+
+      days.forEach((d, i) => {
+        const x = pad + (i / (days.length - 1)) * graphW;
+        const y = pad + graphH - (d.count / maxCount) * graphH;
+        pathPts.push(x + ',' + y);
+        areaPts.push(x + ',' + (pad + graphH));
+
+        const color = d.count >= 3 ? '#ef4444' : d.count >= 2 ? '#d97706' : '#2563eb';
+        if (d.count > 0) {
+          dots.push('<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + color + '" stroke="white" stroke-width="2"/>');
+        }
+        if (i % 5 === 0) {
+          labels.push('<text x="' + x + '" y="' + (chartH - 6) + '" text-anchor="middle" font-size="10" fill="#94a3b8">' + (d.date.getMonth()+1) + '/' + d.date.getDate() + '</text>');
+        }
+      });
+
+      document.getElementById('expiryChart').innerHTML = 
+        '<svg width="100%" height="200" viewBox="0 0 ' + chartW + ' ' + chartH + '" style="overflow:visible;">' +
+        '<defs><linearGradient id="expiryGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(37,99,235,0.12)"/><stop offset="100%" stop-color="rgba(37,99,235,0)"/></linearGradient></defs>' +
+        '<polygon points="' + pad + ',' + (pad + graphH) + ' ' + pathPts.join(' ') + ' ' + (pad + graphW) + ',' + (pad + graphH) + '" fill="url(#expiryGrad)"/>' +
+        '<polyline points="' + pathPts.join(' ') + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+        dots.join('') + labels.join('') +
+        '</svg>';
 
       // 分类统计
       const typeStats = {};
