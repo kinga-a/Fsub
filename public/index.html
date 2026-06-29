@@ -6,23 +6,23 @@
   <title>Fsub | 订阅管理</title>
     <style>
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --primary-light: #dbeafe;
-      --success: #059669;
-      --warning: #d97706;
-      --danger: #dc2626;
-      --info: #2563eb;
-      --bg: #f1f5f9;
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --primary-light: #e0f2fe;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      --bg: #f0f4f8;
       --card: #ffffff;
       --text: #1e293b;
       --text-secondary: #64748b;
       --border: #e2e8f0;
       --shadow: 0 1px 3px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-      --shadow-lg: 0 12px 48px rgba(0,0,0,0.1);
-      --radius: 12px;
-      --radius-sm: 8px;
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+      --radius: 16px;
+      --radius-sm: 12px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -32,8 +32,6 @@
       line-height: 1.6;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
-      background-image: radial-gradient(circle at 10% 20%, rgba(37,99,235,0.03) 0%, transparent 20%),
-                         radial-gradient(circle at 90% 80%, rgba(5,150,105,0.02) 0%, transparent 20%);
     }
     .layout { display: flex; min-height: 100vh; }
 
@@ -48,51 +46,50 @@
       z-index: 100;
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 4px 0 24px rgba(0,0,0,0.12);
-      border-right: 1px solid rgba(255,255,255,0.06);
     }
     .brand {
-      padding: 24px 24px 20px;
+      padding: 28px 24px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .brand h1 {
-      font-size: 20px;
+      font-size: 22px;
       display: flex;
       align-items: center;
       gap: 10px;
-      color: #f8fafc;
+      color: #fff;
       font-weight: 700;
       letter-spacing: -0.3px;
     }
     .nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
     .nav-item {
       display: flex; align-items: center; gap: 12px;
-      padding: 10px 16px; border-radius: 10px; cursor: pointer;
-      font-size: 14px; font-weight: 500; color: rgba(148,163,184,0.8);
-      transition: all 0.2s; margin-bottom: 2px;
+      padding: 12px 16px; border-radius: 12px; cursor: pointer;
+      font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.55);
+      transition: all 0.25s; margin-bottom: 4px;
       position: relative;
     }
     .nav-item:hover {
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.9);
     }
     .nav-item.active {
-      background: rgba(37,99,235,0.15);
-      color: #60a5fa;
+      background: rgba(14,165,233,0.15);
+      color: #38bdf8;
       font-weight: 600;
     }
     .nav-item.active::before {
       content: '';
       position: absolute;
       left: 0; top: 50%; transform: translateY(-50%);
-      width: 3px; height: 18px;
-      background: #3b82f6;
+      width: 3px; height: 20px;
+      background: #38bdf8;
       border-radius: 0 3px 3px 0;
     }
     .sidebar-footer {
-      padding: 14px 16px;
-      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
       font-size: 11px;
-      color: rgba(148,163,184,0.5);
+      color: rgba(255,255,255,0.3);
       text-align: center;
       letter-spacing: 0.5px;
     }
@@ -100,9 +97,9 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.35);
+      background: rgba(0,0,0,0.4);
       z-index: 99;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(2px);
     }
     .sidebar-overlay.open { display: block; }
 
@@ -110,7 +107,7 @@
     .main {
       flex: 1;
       margin-left: 260px;
-      padding: 24px 32px;
+      padding: 28px 32px;
       max-width: calc(100% - 260px);
       min-height: 100vh;
     }
@@ -118,8 +115,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
       border-bottom: 1px solid var(--border);
     }
     .topbar h2 {
@@ -131,15 +128,14 @@
     .topbar-actions { display: flex; gap: 10px; align-items: center; }
     .mobile-menu-btn {
       display: none;
-      padding: 8px 12px;
+      padding: 10px 12px;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 18px;
       box-shadow: var(--shadow);
       transition: all 0.2s;
-      color: var(--text);
     }
     .mobile-menu-btn:active { transform: scale(0.95); }
 
@@ -163,15 +159,14 @@
     .stat-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; bottom: 0;
-      width: 4px;
-      background: var(--primary);
-      border-radius: var(--radius) 0 0 var(--radius);
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+      border-radius: var(--radius) var(--radius) 0 0;
     }
     .stat-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       box-shadow: var(--shadow-md);
-      border-color: #cbd5e1;
     }
     .stat-card.warning::before { background: var(--warning); }
     .stat-card.danger::before { background: var(--danger); }
@@ -227,14 +222,13 @@
       white-space: nowrap;
     }
     .btn-primary {
-      background: var(--primary);
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
       color: white;
-      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+      box-shadow: 0 2px 8px rgba(14,165,233,0.3);
     }
     .btn-primary:hover {
-      background: var(--primary-dark);
       transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+      box-shadow: 0 4px 16px rgba(14,165,233,0.4);
     }
     .btn-primary:active { transform: translateY(0); }
     .btn-secondary {
@@ -262,7 +256,7 @@
     .search-box:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+      box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
       width: 320px;
     }
     .filter-select {
@@ -334,7 +328,7 @@
       display: inline-block;
       white-space: nowrap;
     }
-    .tag-blue { background: #dbeafe; color: #1e40af; }
+    .tag-blue { background: #e0f2fe; color: #0369a1; }
     .tag-green { background: #d1fae5; color: #065f46; }
     .tag-yellow { background: #fef3c7; color: #92400e; }
     .tag-red { background: #fee2e2; color: #991b1b; }
@@ -345,10 +339,10 @@
     .days-left.warning { color: var(--warning); }
     .days-left.ok { color: var(--success); }
     .toggle {
-      width: 40px; height: 22px;
+      width: 44px; height: 24px;
       appearance: none;
       background: #cbd5e1;
-      border-radius: 11px;
+      border-radius: 12px;
       position: relative;
       cursor: pointer;
       transition: background 0.3s;
@@ -357,18 +351,18 @@
     .toggle::after {
       content: '';
       position: absolute;
-      width: 18px; height: 18px;
+      width: 20px; height: 20px;
       background: white;
       border-radius: 50%;
       top: 2px; left: 2px;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
-    .toggle:checked::after { transform: translateX(18px); }
+    .toggle:checked::after { transform: translateX(20px); }
     .actions { display: flex; gap: 6px; }
     .action-btn {
-      width: 32px; height: 32px;
-      border-radius: 8px;
+      width: 34px; height: 34px;
+      border-radius: 9px;
       border: 1px solid var(--border);
       background: white;
       cursor: pointer;
@@ -434,10 +428,6 @@
       border-color: var(--primary);
       font-weight: 600;
     }
-    .page-btn.active:hover {
-      background: var(--primary-dark);
-      border-color: var(--primary-dark);
-    }
     .page-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
@@ -501,14 +491,14 @@
       z-index: 10;
     }
     .close-btn {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border: none;
       background: #f1f5f9;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 18px;
       color: var(--text-secondary);
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -551,7 +541,7 @@
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+      box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
     }
     .form-group .hint { font-size: 12px; color: var(--text-secondary); margin-top: 5px; }
     .mode-selector { display: flex; gap: 10px; margin-bottom: 16px; }
@@ -566,11 +556,11 @@
       font-size: 13px;
       font-weight: 600;
     }
-    .mode-option:hover { border-color: var(--primary); background: #eff6ff; }
+    .mode-option:hover { border-color: var(--primary); background: var(--primary-light); }
     .mode-option.active {
-      border-color: var(--primary);
-      background: #eff6ff;
-      color: var(--primary);
+      border-color: #0ea5e9;
+      background: #e0f2fe;
+      color: #0284c7;
     }
     .mode-option .icon { font-size: 22px; display: block; margin-bottom: 6px; }
     .tag-input {
@@ -586,8 +576,8 @@
     }
     .tag-input input { border: none; outline: none; flex: 1; min-width: 80px; padding: 4px; font-size: 14px; }
     .tag-pill {
-      background: var(--primary-light);
-      color: var(--primary);
+      background: #e0f2fe;
+      color: #0284c7;
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 12px;
@@ -614,9 +604,9 @@
     }
     .channel-option:hover { border-color: var(--primary); }
     .channel-option.active {
-      border-color: var(--primary);
-      background: #eff6ff;
-      color: var(--primary);
+      border-color: #0ea5e9;
+      background: #e0f2fe;
+      color: #0284c7;
       font-weight: 600;
     }
     .channel-option input { display: none; }
@@ -644,12 +634,12 @@
     }
     .date-display .label { font-size: 12px; color: var(--text-secondary); }
     .notify-preview {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
+      background: #ecfeff;
+      border: 1px solid #a5f3fc;
       border-radius: 10px;
       padding: 12px 16px;
       font-size: 13px;
-      color: #1e40af;
+      color: #0e7490;
       margin-top: 10px;
       font-weight: 500;
     }
@@ -658,9 +648,9 @@
       display: flex;
       gap: 4px;
       margin-bottom: 20px;
-      background: #f1f5f9;
+      background: #f8fafc;
       padding: 4px;
-      border-radius: 10px;
+      border-radius: 12px;
     }
     .notify-tab {
       flex: 1;
@@ -678,8 +668,8 @@
     .notify-tab:hover { background: white; }
     .notify-tab.active {
       background: white;
-      color: var(--primary);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      color: #0ea5e9;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
     .notify-section { display: none; }
     .notify-section.active { display: block; }
@@ -687,14 +677,14 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      padding: 12px 20px;
-      border-radius: 10px;
+      padding: 14px 24px;
+      border-radius: 14px;
       color: white;
       font-weight: 600;
       transform: translateY(120px);
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 200;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
       max-width: 400px;
       font-size: 14px;
     }
@@ -704,8 +694,8 @@
     .toast.info { background: var(--info); }
     .view-toggle {
       display: flex;
-      background: #f1f5f9;
-      border-radius: 10px;
+      background: #f8fafc;
+      border-radius: 12px;
       padding: 4px;
       gap: 4px;
     }
@@ -722,8 +712,8 @@
     }
     .view-btn.active {
       background: white;
-      color: var(--primary);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      color: #0ea5e9;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
 
     .analysis-stats-grid {
@@ -789,9 +779,9 @@
 
     /* ===== Dashboard Charts ===== */
     .chart-bar {
-      border-radius: 6px;
+      border-radius: 6px 6px 0 0;
       transition: height 0.5s ease;
-      min-height: 8px;
+      min-height: 4px;
     }
     .chart-container {
       background: var(--card);
@@ -799,10 +789,6 @@
       padding: 24px;
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
-      transition: box-shadow 0.3s ease;
-    }
-    .chart-container:hover {
-      box-shadow: var(--shadow-md);
     }
 
     /* ===== Card View ===== */
@@ -818,6 +804,8 @@
       transform: translateY(-2px);
       box-shadow: var(--shadow-md);
     }
+
+
 
     /* ===== Responsive ===== */
     @media (max-width: 1200px) {
@@ -839,8 +827,8 @@
       }
       .topbar-actions { width: 100%; justify-content: flex-end; }
       .stats-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
-      .stat-card { padding: 20px; }
-      .stat-card .value { font-size: 26px; }
+      .stat-card { padding: 18px; }
+      .stat-card .value { font-size: 28px; }
       .toolbar {
         flex-direction: column;
         align-items: stretch;
@@ -892,6 +880,7 @@
     }
   </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
   <div class="layout">
@@ -899,6 +888,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <h1>🔔 Fsub</h1>
+
       </div>
       <nav class="nav">
         <div class="nav-item active" onclick="switchView('list')" data-view="list">
@@ -1042,7 +1032,7 @@
           <div class="chart-container">
             <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📅 到期分布（未来30天）</h3>
             <div class="chart-scroll-wrap">
-            <div id="expiryChart" style="height:200px;display:flex;align-items:flex-end;gap:6px;padding-bottom:30px;border-bottom:1px solid var(--border);position:relative;"></div>
+            <div id="expiryChart" style="height:200px;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative;"></div>
           </div>
           </div>
           <div class="chart-container">
@@ -1081,17 +1071,17 @@
       </div>
       <div id="analysisView" style="display:none;">
         <div class="analysis-stats-grid">
-          <div class="stat-card warning">
+          <div class="stat-card">
             <div class="label">💰 本月支出</div>
             <div class="value" id="analysisMonth">¥0</div>
             <div class="sub">当前月份</div>
           </div>
-          <div class="stat-card danger">
+          <div class="stat-card">
             <div class="label">📊 年度支出</div>
             <div class="value" id="analysisYear">¥0</div>
             <div class="sub">今年累计</div>
           </div>
-          <div class="stat-card success">
+          <div class="stat-card">
             <div class="label">📈 日均支出</div>
             <div class="value" id="analysisDaily">¥0</div>
             <div class="sub">按年分摊</div>
@@ -1105,7 +1095,7 @@
           <div class="chart-container">
             <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📅 月度支出趋势</h3>
             <div class="chart-scroll-wrap">
-            <div id="monthlyChart" style="height:220px;display:flex;align-items:flex-end;gap:8px;padding-bottom:30px;border-bottom:1px solid var(--border);position:relative;"></div>
+            <div id="monthlyChart" style="height:220px;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative;"></div>
           </div>
           </div>
         </div>
@@ -1117,7 +1107,8 @@
     </main>
   </div>
 
-  
+
+
   <div class="modal-bg" id="modalBg">
     <div class="modal">
       <div class="modal-header">
@@ -1536,9 +1527,9 @@
       const now = new Date(); now.setHours(0,0,0,0);
       const notifyDays = s.notifyDays || 3;
       const soon = new Date(); soon.setDate(soon.getDate() + notifyDays);
-      if (d < now) return { cls: 'danger', text: '已过期', color: '#dc2626', key: 'expired' };
-      if (d <= soon) return { cls: 'warning', text: '即将到期', color: '#d97706', key: 'soon' };
-      return { cls: 'success', text: '正常', color: '#059669', key: 'active' };
+      if (d < now) return { cls: 'danger', text: '已过期', color: '#ef4444', key: 'expired' };
+      if (d <= soon) return { cls: 'warning', text: '即将到期', color: '#f59e0b', key: 'soon' };
+      return { cls: 'success', text: '正常', color: '#10b981', key: 'active' };
     }
 
     function getDaysLeft(dateStr) {
@@ -1603,7 +1594,7 @@
       document.getElementById('pageTitle').textContent = titles[view] || view;
       document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
       document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
-      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' || view === 'analysis' ? 'grid' : 'none';
+      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' ? 'grid' : 'none';
       document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
       document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
       document.getElementById('analysisView').style.display = view === 'analysis' ? 'block' : 'none';
@@ -1950,39 +1941,31 @@
         days.push({ date: d, count });
       }
       const maxCount = Math.max(...days.map(d => d.count), 1);
-      const chartW = 800;
-      const chartH = 180;
-      const pad = 30;
-      const graphW = chartW - pad * 2;
-      const graphH = chartH - pad * 2;
-
-      let pathPts = [];
-      let areaPts = [];
-      let dots = [];
-      let labels = [];
-
-      days.forEach((d, i) => {
-        const x = pad + (i / (days.length - 1)) * graphW;
-        const y = pad + graphH - (d.count / maxCount) * graphH;
-        pathPts.push(x + ',' + y);
-        areaPts.push(x + ',' + (pad + graphH));
-
-        const color = d.count >= 3 ? '#ef4444' : d.count >= 2 ? '#d97706' : '#2563eb';
-        if (d.count > 0) {
-          dots.push('<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + color + '" stroke="white" stroke-width="2"/>');
-        }
+      const chartH = 160;
+      const points = days.map((d, i) => {
+        const x = (i / (days.length - 1)) * 100;
+        const y = chartH - ((d.count / maxCount) * chartH);
+        return { x, y, count: d.count, dateStr: (d.date.getMonth()+1) + '/' + d.date.getDate() };
+      });
+      const pathD = points.map((p, i) => (i === 0 ? 'M' : 'L') + (p.x / 100 * 900) + ',' + p.y).join(' ');
+      const areaD = pathD + ' L' + (900) + ',' + chartH + ' L0,' + chartH + ' Z';
+      let svgHtml = '<svg width="100%" height="' + (chartH + 30) + '" viewBox="0 0 900 ' + (chartH + 30) + '" preserveAspectRatio="none" style="overflow:visible;">' +
+        '<defs><linearGradient id="expiryGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(14,165,233,0.25)"/><stop offset="100%" stop-color="rgba(14,165,233,0.02)"/></linearGradient></defs>' +
+        '<path d="' + areaD + '" fill="url(#expiryGrad)"/>' +
+        '<path d="' + pathD + '" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      points.forEach((p, i) => {
+        const color = p.count >= 3 ? '#ef4444' : p.count >= 2 ? '#f59e0b' : '#0ea5e9';
+        const r = p.count > 0 ? 4 : 2.5;
+        svgHtml += '<circle cx="' + (p.x / 100 * 900) + '" cy="' + p.y + '" r="' + r + '" fill="' + (p.count > 0 ? color : '#cbd5e1') + '" stroke="white" stroke-width="1.5"/>';
         if (i % 5 === 0) {
-          labels.push('<text x="' + x + '" y="' + (chartH - 6) + '" text-anchor="middle" font-size="10" fill="#94a3b8">' + (d.date.getMonth()+1) + '/' + d.date.getDate() + '</text>');
+          svgHtml += '<text x="' + (p.x / 100 * 900) + '" y="' + (chartH + 18) + '" text-anchor="middle" font-size="10" fill="#64748b">' + p.dateStr + '</text>';
         }
       });
-
-      document.getElementById('expiryChart').innerHTML = 
-        '<svg width="100%" height="200" viewBox="0 0 ' + chartW + ' ' + chartH + '" style="overflow:visible;">' +
-        '<defs><linearGradient id="expiryGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(37,99,235,0.12)"/><stop offset="100%" stop-color="rgba(37,99,235,0)"/></linearGradient></defs>' +
-        '<polygon points="' + pad + ',' + (pad + graphH) + ' ' + pathPts.join(' ') + ' ' + (pad + graphW) + ',' + (pad + graphH) + '" fill="url(#expiryGrad)"/>' +
-        '<polyline points="' + pathPts.join(' ') + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-        dots.join('') + labels.join('') +
-        '</svg>';
+      svgHtml += '</svg>';
+      document.getElementById('expiryChart').innerHTML = svgHtml;
+      document.getElementById('expiryChart').style.display = 'block';
+      document.getElementById('expiryChart').style.height = 'auto';
+      document.getElementById('expiryChart').style.paddingBottom = '10px';
 
       // 分类统计
       const typeStats = {};
@@ -1995,7 +1978,7 @@
           typeStats[t].cost += (s.price / totalDays) * 30 * (fx[s.currency] || 1);
         }
       });
-      const typeColors = { '软件订阅': '#2563eb', '电话': '#059669', '域名': '#d97706', '服务器': '#dc2626' };
+      const typeColors = { '软件订阅': '#0ea5e9', '电话': '#22c55e', '域名': '#f59e0b', '服务器': '#ef4444' };
       document.getElementById('typeChart').innerHTML = Object.entries(typeStats).map(([type, stat]) => {
         const color = typeColors[type] || '#64748b';
         return '<div class="type-stat-row">' +
@@ -2073,8 +2056,8 @@
           else bgColor = '#dbeafe';
         }
 
-        html += '<div style="background:' + bgColor + ';min-height:100px;padding:8px;border:2px solid ' + (isToday ? '#2563eb' : borderColor) + ';border-radius:4px;position:relative;">' +
-          '<div style="font-weight:600;font-size:14px;color:' + (isToday ? '#2563eb' : 'var(--text)') + ';margin-bottom:4px;">' + day + (isToday ? '<span style="font-size:10px;margin-left:4px;">今天</span>' : '') + '</div>' +
+        html += '<div style="background:' + bgColor + ';min-height:100px;padding:8px;border:2px solid ' + (isToday ? '#0ea5e9' : borderColor) + ';border-radius:4px;position:relative;">' +
+          '<div style="font-weight:600;font-size:14px;color:' + (isToday ? '#0ea5e9' : 'var(--text)') + ';margin-bottom:4px;">' + day + (isToday ? '<span style="font-size:10px;margin-left:4px;">今天</span>' : '') + '</div>' +
           daySubs.slice(0, 3).map(s => {
             const dl = getDaysLeft(s.nextDate);
             return '<div style="font-size:11px;padding:2px 6px;background:white;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(s.name) + '">' + getTypeIcon(s.type) + ' ' + esc(s.name) + '</div>';
@@ -2128,7 +2111,7 @@
       });
 
       const totalCat = Object.values(categoryStats).reduce((a, b) => a + b, 0) || 1;
-      const catColors = { '软件订阅': '#2563eb', '电话': '#059669', '域名': '#d97706', '服务器': '#dc2626', '其他': '#8b5cf6' };
+      const catColors = { '软件订阅': '#0ea5e9', '电话': '#22c55e', '域名': '#f59e0b', '服务器': '#ef4444', '其他': '#8b5cf6' };
       document.getElementById('categoryChart').innerHTML = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]).map(([cat, cost]) => {
         const pct = (cost / totalCat * 100).toFixed(1);
         const color = catColors[cat] || '#64748b';
@@ -2146,20 +2129,35 @@
         '</div>';
       }).join('') || '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无支出数据</div>';
 
-      // 月度趋势（最近12个月）
+      // 月度趋势折线图（最近12个月）
       const months = [];
       for (let i = 11; i >= 0; i--) {
         const d = new Date(); d.setMonth(d.getMonth() - i);
         months.push({ label: (d.getMonth()+1) + '月', cost: monthCost * (0.8 + Math.random() * 0.4) });
       }
       const maxMonthCost = Math.max(...months.map(m => m.cost), 1);
-      document.getElementById('monthlyChart').innerHTML = months.map((m, i) => {
-        const height = (m.cost / maxMonthCost) * 180;
-        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;max-width:60px;" title="' + m.label + ': ¥' + m.cost.toFixed(0) + '">' +
-          '<div class="chart-bar" style="width:100%;max-width:40px;height:' + height + 'px;background:linear-gradient(to top,#2563eb,#3b82f6);min-height:8px;"></div>' +
-          '<span style="font-size:11px;color:var(--text-secondary);white-space:nowrap;">' + m.label + '</span>' +
-        '</div>';
-      }).join('');
+      const chartH2 = 180;
+      const chartW2 = 800;
+      const pts2 = months.map((m, i) => {
+        const x = (i / (months.length - 1)) * chartW2;
+        const y = chartH2 - ((m.cost / maxMonthCost) * chartH2);
+        return { x, y, label: m.label, cost: m.cost };
+      });
+      const pathD2 = pts2.map((p, i) => (i === 0 ? 'M' : 'L') + p.x + ',' + p.y).join(' ');
+      const areaD2 = pathD2 + ' L' + chartW2 + ',' + chartH2 + ' L0,' + chartH2 + ' Z';
+      let svgHtml2 = '<svg width="100%" height="' + (chartH2 + 30) + '" viewBox="0 0 ' + chartW2 + ' ' + (chartH2 + 30) + '" preserveAspectRatio="none" style="overflow:visible;">' +
+        '<defs><linearGradient id="monthGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(14,165,233,0.2)"/><stop offset="100%" stop-color="rgba(14,165,233,0.02)"/></linearGradient></defs>' +
+        '<path d="' + areaD2 + '" fill="url(#monthGrad)"/>' +
+        '<path d="' + pathD2 + '" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      pts2.forEach((p, i) => {
+        svgHtml2 += '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#0ea5e9" stroke="white" stroke-width="1.5"/>';
+        svgHtml2 += '<text x="' + p.x + '" y="' + (chartH2 + 18) + '" text-anchor="middle" font-size="10" fill="#64748b">' + p.label + '</text>';
+      });
+      svgHtml2 += '</svg>';
+      document.getElementById('monthlyChart').innerHTML = svgHtml2;
+      document.getElementById('monthlyChart').style.display = 'block';
+      document.getElementById('monthlyChart').style.height = 'auto';
+      document.getElementById('monthlyChart').style.paddingBottom = '10px';
 
       // 支出排行 TOP10
       const sorted = [...subs].filter(s => s.price > 0 && s.enabled !== false).sort((a, b) => {
@@ -2173,7 +2171,7 @@
         const totalDays = (daysInPeriod[s.cycleUnit] || 30) * (s.cycleValue || 1);
         const monthly = (s.price / totalDays) * 30 * (fx[s.currency] || 1);
         return '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:#f8fafc;border-radius:8px;">' +
-          '<div style="width:24px;height:24px;border-radius:50%;background:' + (i < 3 ? '#2563eb' : '#e2e8f0') + ';color:' + (i < 3 ? 'white' : 'var(--text)') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">' + (i + 1) + '</div>' +
+          '<div style="width:24px;height:24px;border-radius:50%;background:' + (i < 3 ? '#0ea5e9' : '#e2e8f0') + ';color:' + (i < 3 ? 'white' : 'var(--text)') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">' + (i + 1) + '</div>' +
           '<span style="font-size:18px;">' + getTypeIcon(s.type) + '</span>' +
           '<div style="flex:1;">' +
             '<div style="font-weight:600;font-size:14px;">' + esc(s.name) + '</div>' +
