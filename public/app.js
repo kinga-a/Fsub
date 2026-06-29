@@ -701,18 +701,103 @@
           else bgColor = '#dbeafe';
         }
 
-        html += '<div style="background:' + bgColor + ';min-height:100px;padding:8px;border:2px solid ' + (isToday ? '#0ea5e9' : borderColor) + ';border-radius:4px;position:relative;">' +
-          '<div style="font-weight:600;font-size:14px;color:' + (isToday ? '#0ea5e9' : 'var(--text)') + ';margin-bottom:4px;">' + day + (isToday ? '<span style="font-size:10px;margin-left:4px;">今天</span>' : '') + '</div>' +
-          daySubs.slice(0, 3).map(s => {
+        // 桌面端：文字列表
+        let subListHtml = '';
+        if (daySubs.length > 0) {
+          subListHtml = '<div class="sub-list">' +
+            daySubs.slice(0, 3).map(s => {
+              const dl = getDaysLeft(s.nextDate);
+              return '<div style="font-size:11px;padding:2px 6px;background:white;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(s.name) + '">' + getTypeIcon(s.type) + ' ' + esc(s.name) + '</div>';
+            }).join('') +
+            (daySubs.length > 3 ? '<div style="font-size:11px;color:var(--text-secondary);text-align:center;">+' + (daySubs.length - 3) + '个</div>' : '') +
+            '</div>';
+        }
+
+        // 手机端：颜色圆点
+        let dotRowHtml = '';
+        if (daySubs.length > 0) {
+          const dots = daySubs.map(s => {
             const dl = getDaysLeft(s.nextDate);
-            return '<div style="font-size:11px;padding:2px 6px;background:white;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(s.name) + '">' + getTypeIcon(s.type) + ' ' + esc(s.name) + '</div>';
-          }).join('') +
-          (daySubs.length > 3 ? '<div style="font-size:11px;color:var(--text-secondary);text-align:center;">+' + (daySubs.length - 3) + '个</div>' : '') +
+            let dotCls = 'ok';
+            if (dl < 0) dotCls = 'expired';
+            else if (dl >= 0 && dl <= (s.notifyDays || 3)) dotCls = 'soon';
+            return '<div class="calendar-dot ' + dotCls + '" data-subid="' + s.id + '"></div>';
+          }).join('');
+          dotRowHtml = '<div class="calendar-dot-row">' + dots + '</div>';
+        }
+
+        const cellData = daySubs.length > 0 ? 'data-subs="' + btoa(JSON.stringify(daySubs.map(s => ({ name: s.name, type: s.type, nextDate: s.nextDate, notifyDays: s.notifyDays || 3 })))) + '"' : '';
+
+        html += '<div class="calendar-grid-cell" style="background:' + bgColor + ';min-height:100px;padding:8px;border:2px solid ' + (isToday ? '#0ea5e9' : borderColor) + ';border-radius:4px;position:relative;cursor:pointer;" ' + cellData + ' ontouchstart="handleCellTouch(event)" onmouseenter="showCalendarTooltip(event)" onmouseleave="hideCalendarTooltip(event)">' +
+          '<div style="font-weight:600;font-size:14px;color:' + (isToday ? '#0ea5e9' : 'var(--text)') + ';margin-bottom:4px;">' + day + (isToday ? '<span style="font-size:10px;margin-left:4px;">今天</span>' : '') + '</div>' +
+          subListHtml +
+          dotRowHtml +
         '</div>';
       }
 
       document.getElementById('calendarGrid').innerHTML = html;
     }
+
+    function handleCellTouch(e) {
+      if (window.innerWidth <= 768) {
+        showCalendarTooltip(e);
+      }
+    }
+
+    function showCalendarTooltip(e) {
+      const cell = e.currentTarget;
+      const subsData = cell.getAttribute('data-subs');
+      if (!subsData) return;
+
+      const daySubs = JSON.parse(atob(subsData));
+      if (daySubs.length === 0) return;
+
+      const tooltip = document.getElementById('calendarTooltip');
+      const title = document.getElementById('tooltipTitle');
+      const content = document.getElementById('tooltipContent');
+
+      title.textContent = daySubs.length + ' 个订阅到期';
+      content.innerHTML = daySubs.map(s => {
+        const dl = getDaysLeft(s.nextDate);
+        let statusCls = 'ok';
+        let statusText = '正常';
+        if (dl < 0) { statusCls = 'expired'; statusText = '已过期'; }
+        else if (dl >= 0 && dl <= s.notifyDays) { statusCls = 'soon'; statusText = '即将到期'; }
+        return '<div class="calendar-tooltip-item">' +
+          '<div class="calendar-tooltip-dot ' + statusCls + '"></div>' +
+          '<span class="calendar-tooltip-name">' + esc(s.name) + '</span>' +
+          '<span class="calendar-tooltip-status ' + statusCls + '">' + statusText + '</span>' +
+        '</div>';
+      }).join('');
+
+      tooltip.classList.add('show');
+
+      const rect = cell.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+      let top = rect.bottom + 8;
+
+      if (left < 8) left = 8;
+      if (left + tooltipRect.width > window.innerWidth - 8) left = window.innerWidth - tooltipRect.width - 8;
+      if (top + tooltipRect.height > window.innerHeight - 8) {
+        top = rect.top - tooltipRect.height - 8;
+      }
+
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+
+    function hideCalendarTooltip(e) {
+      const tooltip = document.getElementById('calendarTooltip');
+      tooltip.classList.remove('show');
+    }
+
+    document.addEventListener('click', function(e) {
+      const tooltip = document.getElementById('calendarTooltip');
+      if (!e.target.closest('.calendar-grid-cell') && !e.target.closest('.calendar-tooltip')) {
+        tooltip.classList.remove('show');
+      }
+    });
 
     function changeCalendarMonth(delta) {
       calendarDate.setMonth(calendarDate.getMonth() + delta);
