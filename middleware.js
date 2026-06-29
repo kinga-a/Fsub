@@ -34,7 +34,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RenewHelper | 登录</title>
+  <title>Fsub | 登录</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -112,7 +112,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 <body>
   <div class="login-box">
     <div class="brand-icon">🔔</div>
-    <h1>RenewHelper</h1>
+    <h1>Fsub</h1>
 
     <div class="input-group">
       <label>访问码</label>
@@ -120,7 +120,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
     </div>
     <button class="btn" onclick="login()">进入系统</button>
     <div class="error" id="error">访问码错误，请重试</div>
-    <div class="footer">RenewHelper v2.0 · 分布式云资产全周期托管</div>
+    <div class="footer">Fsub · 分布式云资产全周期托管</div>
   </div>
   <script>
     async function login() {
