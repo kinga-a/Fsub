@@ -789,9 +789,9 @@
 
     /* ===== Dashboard Charts ===== */
     .chart-bar {
-      border-radius: 6px 6px 0 0;
+      border-radius: 6px;
       transition: height 0.5s ease;
-      min-height: 4px;
+      min-height: 8px;
     }
     .chart-container {
       background: var(--card);
@@ -1536,9 +1536,9 @@
       const now = new Date(); now.setHours(0,0,0,0);
       const notifyDays = s.notifyDays || 3;
       const soon = new Date(); soon.setDate(soon.getDate() + notifyDays);
-      if (d < now) return { cls: 'danger', text: '已过期', color: '#ef4444', key: 'expired' };
-      if (d <= soon) return { cls: 'warning', text: '即将到期', color: '#f59e0b', key: 'soon' };
-      return { cls: 'success', text: '正常', color: '#10b981', key: 'active' };
+      if (d < now) return { cls: 'danger', text: '已过期', color: '#dc2626', key: 'expired' };
+      if (d <= soon) return { cls: 'warning', text: '即将到期', color: '#d97706', key: 'soon' };
+      return { cls: 'success', text: '正常', color: '#059669', key: 'active' };
     }
 
     function getDaysLeft(dateStr) {
@@ -1603,7 +1603,7 @@
       document.getElementById('pageTitle').textContent = titles[view] || view;
       document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
       document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
-      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' ? 'grid' : 'none';
+      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' || view === 'analysis' ? 'grid' : 'none';
       document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
       document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
       document.getElementById('analysisView').style.display = view === 'analysis' ? 'block' : 'none';
@@ -1955,7 +1955,7 @@
         const isWeekend = d.date.getDay() === 0 || d.date.getDay() === 6;
         const color = d.count > 0 ? (d.count >= 3 ? '#ef4444' : d.count >= 2 ? '#d97706' : '#2563eb') : (isWeekend ? '#f1f5f9' : '#e2e8f0');
         return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;max-width:30px;" title="' + (d.date.getMonth()+1) + '/' + d.date.getDate() + ': ' + d.count + '个到期">' +
-          '<div class="chart-bar" style="width:100%;max-width:20px;height:' + height + 'px;background:' + color + ';min-height:4px;"></div>' +
+          '<div class="chart-bar" style="width:100%;max-width:20px;height:' + height + 'px;background:' + color + ';min-height:8px;"></div>' +
           (i % 5 === 0 ? '<span style="font-size:10px;color:var(--text-secondary);position:absolute;bottom:8px;transform:translateX(-50%);">' + (d.date.getMonth()+1) + '/' + d.date.getDate() + '</span>' : '') +
           '</div>';
       }).join('');
@@ -1971,7 +1971,7 @@
           typeStats[t].cost += (s.price / totalDays) * 30 * (fx[s.currency] || 1);
         }
       });
-      const typeColors = { '软件订阅': '#2563eb', '电话': '#10b981', '域名': '#f59e0b', '服务器': '#ef4444' };
+      const typeColors = { '软件订阅': '#2563eb', '电话': '#059669', '域名': '#d97706', '服务器': '#dc2626' };
       document.getElementById('typeChart').innerHTML = Object.entries(typeStats).map(([type, stat]) => {
         const color = typeColors[type] || '#64748b';
         return '<div class="type-stat-row">' +
@@ -2104,7 +2104,7 @@
       });
 
       const totalCat = Object.values(categoryStats).reduce((a, b) => a + b, 0) || 1;
-      const catColors = { '软件订阅': '#2563eb', '电话': '#10b981', '域名': '#f59e0b', '服务器': '#ef4444', '其他': '#8b5cf6' };
+      const catColors = { '软件订阅': '#2563eb', '电话': '#059669', '域名': '#d97706', '服务器': '#dc2626', '其他': '#8b5cf6' };
       document.getElementById('categoryChart').innerHTML = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]).map(([cat, cost]) => {
         const pct = (cost / totalCat * 100).toFixed(1);
         const color = catColors[cat] || '#64748b';
@@ -2132,7 +2132,7 @@
       document.getElementById('monthlyChart').innerHTML = months.map((m, i) => {
         const height = (m.cost / maxMonthCost) * 180;
         return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;max-width:60px;" title="' + m.label + ': ¥' + m.cost.toFixed(0) + '">' +
-          '<div class="chart-bar" style="width:100%;max-width:40px;height:' + height + 'px;background:linear-gradient(to top,#2563eb,#3b82f6);min-height:4px;"></div>' +
+          '<div class="chart-bar" style="width:100%;max-width:40px;height:' + height + 'px;background:linear-gradient(to top,#2563eb,#3b82f6);min-height:8px;"></div>' +
           '<span style="font-size:11px;color:var(--text-secondary);white-space:nowrap;">' + m.label + '</span>' +
         '</div>';
       }).join('');
