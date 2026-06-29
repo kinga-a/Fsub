@@ -39,7 +39,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
-      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -76,8 +76,8 @@ const LOGIN_HTML = `<!DOCTYPE html>
     }
     .input-group input:focus {
       outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 4px rgba(79,70,229,0.1);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 4px rgba(14,165,233,0.1);
     }
     .btn {
       width: 100%;
