@@ -49,10 +49,8 @@
 │           ├── notify.js           # 通知配置 & 定时通知
 │           ├── subscriptions.js    # 订阅的 GET/POST
 │           └── verify.js           # Token 验证
-│
 ├── public/
 │      └── index.html          # 前端页面
-│
 ├── README.md
 ├── edgeone.json        # EdgeOne Pages 配置
 └── middleware.js       # 中间件（根级）
