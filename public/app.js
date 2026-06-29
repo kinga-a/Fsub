@@ -699,7 +699,8 @@
           if (hasExpired) bgColor = '#fee2e2';
           else if (hasSoon) bgColor = '#fef3c7';
           else bgColor = '#dbeafe';
-        }         
+        }
+
         // 桌面端：文字列表
         let subListHtml = '';
         if (daySubs.length > 0) {
@@ -717,7 +718,7 @@
         if (daySubs.length > 0) {
           const dots = daySubs.map(s => {
             const dl = getDaysLeft(s.nextDate);
-          let dotCls = 'ok';
+            let dotCls = 'ok';
             if (dl < 0) dotCls = 'expired';
             else if (dl >= 0 && dl <= (s.notifyDays || 3)) dotCls = 'soon';
             return '<div class="calendar-dot ' + dotCls + '" data-subid="' + s.id + '"></div>';
@@ -730,14 +731,14 @@
         html += '<div class="calendar-grid-cell" style="background:' + bgColor + ';min-height:100px;padding:8px;border:2px solid ' + (isToday ? '#0ea5e9' : borderColor) + ';border-radius:4px;position:relative;cursor:pointer;" ' + cellData + ' ontouchstart="handleCellTouch(event)" onmouseenter="showCalendarTooltip(event)" onmouseleave="hideCalendarTooltip(event)">' +
           '<div style="font-weight:600;font-size:14px;color:' + (isToday ? '#0ea5e9' : 'var(--text)') + ';margin-bottom:4px;">' + day + (isToday ? '<span style="font-size:10px;margin-left:4px;">今天</span>' : '') + '</div>' +
           subListHtml +
-          dotRowHtml +          
+          dotRowHtml +
         '</div>';
       }
 
       document.getElementById('calendarGrid').innerHTML = html;
     }
+
     function handleCellTouch(e) {
-      // 手机上点击显示tooltip
       if (window.innerWidth <= 768) {
         showCalendarTooltip(e);
       }
@@ -771,13 +772,11 @@
 
       tooltip.classList.add('show');
 
-      // 定位tooltip
       const rect = cell.getBoundingClientRect();
       const tooltipRect = tooltip.getBoundingClientRect();
       let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
       let top = rect.bottom + 8;
 
-      // 边界检查
       if (left < 8) left = 8;
       if (left + tooltipRect.width > window.innerWidth - 8) left = window.innerWidth - tooltipRect.width - 8;
       if (top + tooltipRect.height > window.innerHeight - 8) {
@@ -793,13 +792,13 @@
       tooltip.classList.remove('show');
     }
 
-    // 点击其他地方隐藏tooltip
     document.addEventListener('click', function(e) {
       const tooltip = document.getElementById('calendarTooltip');
       if (!e.target.closest('.calendar-grid-cell') && !e.target.closest('.calendar-tooltip')) {
         tooltip.classList.remove('show');
       }
-    });                    
+    });
+
     function changeCalendarMonth(delta) {
       calendarDate.setMonth(calendarDate.getMonth() + delta);
       renderCalendar();
