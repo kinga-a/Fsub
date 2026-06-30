@@ -226,10 +226,14 @@
         }
       });
 
-      document.getElementById('statTotal').textContent = total;
-      document.getElementById('statSoon').textContent = soonCount;
-      document.getElementById('statExpired').textContent = expiredCount;
-      document.getElementById('statMonthly').textContent = '¥' + monthly.toFixed(0);
+      const statTotal = document.getElementById('statTotal');
+      if (statTotal) statTotal.textContent = total;
+      const statSoon = document.getElementById('statSoon');
+      if (statSoon) statSoon.textContent = soonCount;
+      const statExpired = document.getElementById('statExpired');
+      if (statExpired) statExpired.textContent = expiredCount;
+      const statMonthly = document.getElementById('statMonthly');
+      if (statMonthly) statMonthly.textContent = '¥' + monthly.toFixed(0);
     }
 
     function switchView(view) {
