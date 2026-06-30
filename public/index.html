@@ -285,18 +285,22 @@
           <div class="form-section-title">🔔 通知渠道</div>
           <div class="hint">选择通知渠道（留空则默认推送所有已启用的渠道）</div>
           <div class="channel-selector" id="channelSelector">
-            <label class="channel-option" onclick="toggleChannel(this, 'dingtalk')">
-              <input type="checkbox" value="dingtalk"> 📱 钉钉
-            </label>
-            <label class="channel-option" onclick="toggleChannel(this, 'feishu')">
-              <input type="checkbox" value="feishu"> 🚀 飞书
-            </label>
-            <label class="channel-option" onclick="toggleChannel(this, 'wecom')">
-              <input type="checkbox" value="wecom"> 💼 企微
-            </label>
-            <label class="channel-option" onclick="toggleChannel(this, 'email')">
-              <input type="checkbox" value="email"> 📧 邮件
-            </label>
+            <div class="channel-option" onclick="toggleChannel(this, 'dingtalk')">
+             <input type="checkbox" value="dingtalk">
+             <span>📱 钉钉</span>
+            </div>
+            <div class="channel-option" onclick="toggleChannel(this, 'feishu')">
+             <input type="checkbox" value="feishu">
+             <span>🚀 飞书</span>
+            </div>
+            <div class="channel-option" onclick="toggleChannel(this, 'wecom')">
+             <input type="checkbox" value="wecom">
+             <span>💼 企微</span>
+            </div>
+            <div class="channel-option" onclick="toggleChannel(this, 'email')">
+             <input type="checkbox" value="email">
+             <span>📧 邮件</span>
+            </div>
           </div>
         </div>
 

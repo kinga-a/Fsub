@@ -481,11 +481,12 @@ tr:hover td { background: var(--gray-50); }
 }
 #cardView > div {
   background: var(--card);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg); /* 从 md 改成 lg，18px圆角更圆润 */
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
   transition: transform var(--normal), box-shadow var(--normal);
 }
+
 #cardView > div:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
@@ -683,7 +684,6 @@ tr:hover td { background: var(--gray-50); }
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  /* 缩小左右内边距，窄屏不挤文字 */
   padding: 8px 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -692,14 +692,21 @@ tr:hover td { background: var(--gray-50); }
   transition: all var(--fast);
   width: 100%;
   box-sizing: border-box;
-  /* 文字不自动换行 */
   white-space: nowrap;
+  /* 增加点击区域优化 */
+  user-select: none;
 }
+
+/* 强化选中高亮，颜色更深、边框加粗，浅色页面一眼可见 */
 .channel-option.active {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  color: #0284c7;
+  border: 1.5px solid var(--primary);
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 500;
+  /* 轻微内发光强化选中感 */
+  box-shadow: inset 0 0 0 1px rgba(14,165,233,0.2);
 }
+
 .channel-option input { display: none; }
 
 /* 模式选择 */
