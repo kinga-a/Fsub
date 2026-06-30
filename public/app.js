@@ -237,17 +237,22 @@
     }
 
     function switchView(view) {
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      document.querySelector('.nav-item[data-view="' + view + '"]').classList.add('active');
-      const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图' };
-      document.getElementById('pageTitle').textContent = titles[view] || view;
-      document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
-      document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
-      const sg = document.getElementById('statsGrid');
-      if (sg) sg.style.display = view === 'dashboard' ? 'grid' : 'none';
-      document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
-      document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
-    }
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector('.nav-item[data-view="' + view + '"]').classList.add('active');
+  const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图' };
+  document.getElementById('pageTitle').textContent = titles[view] || view;
+  document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
+  document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
+  document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
+  document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+
+  // 切换视图自动渲染对应面板
+  if (view === 'dashboard') {
+    renderDashboard();
+  } else if (view === 'calendar') {
+    renderCalendar();
+  }
+}
 
     function setListView(mode) {
       listViewMode = mode;
