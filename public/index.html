@@ -25,9 +25,7 @@
         <div class="nav-item" onclick="switchView('calendar')" data-view="calendar">
           <span>📅</span> 日历视图
         </div>
-        <div class="nav-item" onclick="switchView('analysis')" data-view="analysis">
-          <span>💰</span> 支出分析
-        </div>
+
         <div class="nav-item" onclick="openNotifyModal()">
           <span>🔔</span> 通知设置
         </div>
@@ -53,30 +51,7 @@
         </div>
       </div>
 
-      <div class="stats-grid" id="statsGrid">
-        <div class="stat-card success">
-          <div class="label">📊 服务总数</div>
-          <div class="value" id="statTotal">0</div>
-          <div class="sub">全部订阅服务</div>
-        </div>
-        <div class="stat-card warning">
-          <div class="label">⏰ 即将到期</div>
-          <div class="value" id="statSoon">0</div>
-          <div class="sub">需关注处理</div>
-        </div>
-        <div class="stat-card danger">
-          <div class="label">⚠️ 已过期/警告</div>
-          <div class="value" id="statExpired">0</div>
-          <div class="sub">请立即续费</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">💰 总花费/月</div>
-          <div class="value" id="statMonthly">¥0</div>
-          <div class="sub">按月均摊估算</div>
-        </div>
-      </div>
-
-      <div class="toolbar" id="listToolbar">
+<div class="toolbar" id="listToolbar">
         <div class="toolbar-left">
           <input type="text" class="search-box" id="searchInput" placeholder="搜索名称、类型或备注..." oninput="renderList()">
           <select class="filter-select" id="filterType" onchange="renderList()">
@@ -131,6 +106,7 @@
       </div>
 
       <div id="dashboardView" style="display:none;">
+
         <div class="stats-grid" style="margin-bottom:24px;">
           <div class="stat-card success">
             <div class="label">📊 活跃订阅</div>
@@ -169,32 +145,15 @@
           <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📈 最近添加</h3>
           <div id="recentSubs" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
-      </div>
-      <div id="calendarView" style="display:none;">
-        <div class="chart-container" style="margin-bottom:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)">◀ 上月</button>
-            <h3 id="calendarTitle" style="font-size:18px;color:var(--text);"></h3>
-            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">下月 ▶</button>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;">
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">日</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">一</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">二</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">三</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">四</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">五</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">六</div>
-          </div>
-          <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-top:1px;"></div>
-        </div>
-        <div id="calendarLegend" style="display:flex;gap:16px;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fee2e2;display:inline-block;"></span> 已过期</div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fef3c7;display:inline-block;"></span> 即将到期</div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#dbeafe;display:inline-block;"></span> 正常</div>
-        </div>
-      </div>
-      <div id="analysisView" style="display:none;">
+      
+
+<!-- 支出分析板块 -->
+<div style="margin-top:32px;margin-bottom:16px;">
+  <h3 style="font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
+    <span>💰</span> 支出分析
+  </h3>
+</div>
+
         <div class="analysis-stats-grid">
           <div class="stat-card">
             <div class="label">💰 本月支出</div>
@@ -228,8 +187,33 @@
           <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">💸 支出排行 TOP10</h3>
           <div id="topExpense" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
+      
+</div>
+      <div id="calendarView" style="display:none;">
+        <div class="chart-container" style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)">◀ 上月</button>
+            <h3 id="calendarTitle" style="font-size:18px;color:var(--text);"></h3>
+            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">下月 ▶</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;">
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">日</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">一</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">二</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">三</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">四</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">五</div>
+            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">六</div>
+          </div>
+          <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-top:1px;"></div>
+        </div>
+        <div id="calendarLegend" style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fee2e2;display:inline-block;"></span> 已过期</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fef3c7;display:inline-block;"></span> 即将到期</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#dbeafe;display:inline-block;"></span> 正常</div>
+        </div>
       </div>
-    </main>
+      </main>
   </div>
 
 
