@@ -485,16 +485,14 @@ tr:hover td { background: var(--gray-50); }
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-xl);
 }
+
 #cardView > div {
   background: var(--card);
-  /* 卡片整体圆角，推荐lg大圆角，也可改为固定值 18px / 20px / 24px */
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
   transition: transform var(--normal), box-shadow var(--normal);
-  /* 核心关键：裁切内部溢出内容，让圆角完整显示，内部元素不会撑破直角 */
   overflow: hidden;
-  /* 你调试里看到的padding也保留 */
   padding: 20px;
 }
 
