@@ -235,14 +235,13 @@
     function switchView(view) {
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       document.querySelector('.nav-item[data-view="' + view + '"]').classList.add('active');
-      const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图', analysis: '💰 支出分析' };
+      const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图' };
       document.getElementById('pageTitle').textContent = titles[view] || view;
       document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
       document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
-      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' ? 'grid' : 'none';
+      document.getElementById('statsGrid').style.display = view === 'dashboard' ? 'grid' : 'none';
       document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
       document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
-      document.getElementById('analysisView').style.display = view === 'analysis' ? 'block' : 'none';
     }
 
     function setListView(mode) {
@@ -656,6 +655,9 @@
           '<span class="tag tag-' + (st.cls === 'danger' ? 'red' : st.cls === 'warning' ? 'yellow' : 'green') + '">' + (daysLeft <= 0 ? '已过期' : daysLeft + '天后') + '</span>' +
         '</div>';
       }).join('') || '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无数据</div>';
+
+      // 渲染支出分析板块
+      renderAnalysis();
     }
 
     // ========== 日历视图功能 ==========
@@ -830,25 +832,4 @@
       }).join('') || '<div style="text-align:center;color:var(--text-secondary);padding:20px;">暂无支出数据</div>';
     }
 
-    // 修改 switchView 函数，添加仪表盘/日历/分析渲染
-    const originalSwitchView = switchView;
-    switchView = function(view) {
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      const navItem = document.querySelector('.nav-item[data-view="' + view + '"]');
-      if (navItem) navItem.classList.add('active');
-
-      const titles = { list: '📋 订阅列表', dashboard: '📊 仪表盘', calendar: '📅 日历视图', analysis: '💰 支出分析' };
-      document.getElementById('pageTitle').textContent = titles[view] || view;
-      document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
-      document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
-      document.getElementById('statsGrid').style.display = view === 'list' || view === 'dashboard' || view === 'analysis' ? 'grid' : 'none';
-      document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
-      document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
-      document.getElementById('analysisView').style.display = view === 'analysis' ? 'block' : 'none';
-
-      if (view === 'dashboard') renderDashboard();
-      if (view === 'calendar') renderCalendar();
-      if (view === 'analysis') renderAnalysis();
-    };
-
-    load();
+        load();
