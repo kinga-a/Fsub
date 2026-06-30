@@ -271,7 +271,7 @@
       editingId = null;
       currentTags = [];
       currentChannels = [];
-      document.getElementById('modalTitle').textContent = '新增服务';
+      document.getElementById('modalTitle').textContent = '新增订阅';
       document.getElementById('mName').value = '';
       document.getElementById('mType').value = '软件订阅';
       renderTags();
