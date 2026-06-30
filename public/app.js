@@ -243,7 +243,8 @@
       document.getElementById('pageTitle').textContent = titles[view] || view;
       document.getElementById('listContent').style.display = view === 'list' ? 'block' : 'none';
       document.getElementById('listToolbar').style.display = view === 'list' ? 'flex' : 'none';
-      const sg = document.getElementById('statsGrid'); if (sg) sg.style.display = view === 'dashboard' ? 'grid' : 'none';
+      const sg = document.getElementById('statsGrid');
+      if (sg) sg.style.display = view === 'dashboard' ? 'grid' : 'none';
       document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
       document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
     }
