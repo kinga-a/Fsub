@@ -2,10 +2,27 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 强化视口+安全区适配，解决平板/手机浏览器高度裁切 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="light">
+  <meta name="format-detection" content="telephone=no">
   <title>Fsub | 订阅管理</title>
   <link rel="stylesheet" href="style.css">   
-<base target="_blank">
+  <base target="_blank">
+  <!-- Safari/Chrome 字体渲染兼容 -->
+  <style>
+    @supports (-webkit-font-smoothing: antialiased) {
+      body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    }
+    /* 修复Safari日期输入框默认样式 */
+    input[type="date"],input[type="time"] { -webkit-appearance: textfield; }
+    input::-webkit-date-and-time-value { min-height: 20px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
 </head>
 <body>
   <div class="layout">
@@ -13,46 +30,48 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <h1>🔔 Fsub</h1>
-
       </div>
       <nav class="nav">
         <div class="nav-item active" onclick="switchView('list')" data-view="list">
-          <span>📋</span> 订阅列表
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">订阅列表</span>
         </div>
         <div class="nav-item" onclick="switchView('dashboard')" data-view="dashboard">
-          <span>📊</span> 仪表盘
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">仪表盘</span>
         </div>
         <div class="nav-item" onclick="switchView('calendar')" data-view="calendar">
-          <span>📅</span> 日历视图
+          <span class="nav-icon">📅</span>
+          <span class="nav-text">日历视图</span>
         </div>
-
         <div class="nav-item" onclick="openNotifyModal()">
-          <span>🔔</span> 通知设置
+          <span class="nav-icon">🔔</span>
+          <span class="nav-text">通知设置</span>
         </div>
         <div class="nav-item" onclick="logout()">
-          <span>🚪</span> 安全退出
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">安全退出</span>
         </div>
       </nav>
       <div class="sidebar-footer">
         Fsub v2.0
       </div>
     </aside>
-
     <main class="main">
       <div class="topbar">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-left">
           <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
           <h2 id="pageTitle">📋 订阅列表</h2>
         </div>
         <div class="topbar-actions">
           <button class="btn btn-primary" onclick="openModal()">
-            <span>+</span> 新增服务
+            <span class="btn-icon">+</span> 新增订阅
           </button>
         </div>
       </div>
 
-<div class="toolbar" id="listToolbar">
-        <div class="toolbar-left">
+      <div class="toolbar" id="listToolbar">
+        <div class="toolbar-filter-group">
           <input type="text" class="search-box" id="searchInput" placeholder="搜索名称、类型或备注..." oninput="renderList()">
           <select class="filter-select" id="filterType" onchange="renderList()">
             <option value="">全部分类</option>
@@ -70,7 +89,7 @@
             <option value="disabled">已停用</option>
           </select>
         </div>
-        <div class="toolbar-right">
+        <div class="toolbar-view-group">
           <div class="view-toggle">
             <button class="view-btn active" onclick="setListView('table')">☰ 列表</button>
             <button class="view-btn" onclick="setListView('card')">⊞ 卡片</button>
@@ -78,162 +97,170 @@
         </div>
       </div>
 
-      <div class="table-wrap" id="listContent">
+      <!-- 订阅列表区域 -->
+      <div class="list-container" id="listContent">
         <div class="empty" id="emptyState">
-          <div style="font-size:48px;margin-bottom:16px;">📭</div>
-          <h3>暂无订阅</h3>
-          <p>点击右上角「新增服务」添加你的第一个订阅</p>
+          <div class="empty-icon">📭</div>
+          <h3 class="empty-title">暂无订阅</h3>
+          <p class="empty-desc">点击右上角「新增订阅」添加你的第一个订阅</p>
         </div>
-        <table id="subTable" style="display:none;">
-          <thead>
-            <tr>
-              <th>服务名称</th>
-              <th>标签</th>
-              <th>类型</th>
-              <th class="sortable" onclick="sortBy('nextDate')">下次到期 ↕</th>
-              <th>已运行</th>
-              <th>上次续费</th>
-              <th>周期</th>
-              <th>账单额</th>
-              <th>状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-        <div id="cardView" style="display:none;padding:20px;"></div>
+        <div class="table-wrap">
+          <table id="subTable" style="display:none;">
+            <thead>
+              <tr>
+                <th>服务名称</th>
+                <th>标签</th>
+                <th>类型</th>
+                <th class="sortable" onclick="sortBy('nextDate')">下次到期 ↕</th>
+                <th>已运行</th>
+                <th>上次续费</th>
+                <th>周期</th>
+                <th>账单额</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div id="cardView" class="card-grid" style="display:none;"></div>
         <div class="pagination" id="pagination" style="display:none;"></div>
       </div>
 
-      <div id="dashboardView" style="display:none;">
-
-        <div class="stats-grid" style="margin-bottom:24px;">
+      <!-- 仪表盘区域 -->
+      <div id="dashboardView" class="dashboard-wrap" style="display:none;">
+        <div class="stats-grid">
           <div class="stat-card success">
-            <div class="label">📊 活跃订阅</div>
+            <div class="stat-label">📊 活跃订阅</div>
             <div class="value" id="dashActive">0</div>
-            <div class="sub">正常运行的服务</div>
+            <div class="stat-sub">正常运行的服务</div>
           </div>
           <div class="stat-card warning">
-            <div class="label">⏰ 即将到期</div>
+            <div class="stat-label">⏰ 即将到期</div>
             <div class="value" id="dashSoon">0</div>
-            <div class="sub">需关注处理</div>
+            <div class="stat-sub">需关注处理</div>
           </div>
           <div class="stat-card danger">
-            <div class="label">⚠️ 已过期</div>
+            <div class="stat-label">⚠️ 已过期</div>
             <div class="value" id="dashExpired">0</div>
-            <div class="sub">请立即续费</div>
+            <div class="stat-sub">请立即续费</div>
           </div>
           <div class="stat-card">
-            <div class="label">💰 月均支出</div>
+            <div class="stat-label">💰 月均支出</div>
             <div class="value" id="dashMonthly">¥0</div>
-            <div class="sub">按月均摊估算</div>
+            <div class="stat-sub">按月均摊估算</div>
           </div>
         </div>
         <div class="dash-grid">
           <div class="chart-container">
-            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📅 到期分布（未来30天）</h3>
+            <h3 class="chart-title">📅 到期分布（未来30天）</h3>
             <div class="chart-scroll-wrap">
-            <div id="expiryChart" style="height:200px;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative;"></div>
-          </div>
+              <div class="chart-svg-wrap" id="expiryChart"></div>
+            </div>
           </div>
           <div class="chart-container">
-            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">🏷️ 分类统计</h3>
-            <div id="typeChart" style="display:flex;flex-direction:column;gap:12px;"></div>
+            <h3 class="chart-title">🏷️ 分类统计</h3>
+            <div id="typeChart" class="stat-list"></div>
           </div>
         </div>
-        <div class="chart-container" style="margin-top:20px;">
-          <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📈 最近添加</h3>
-          <div id="recentSubs" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div class="chart-container">
+          <h3 class="chart-title">📈 最近添加</h3>
+          <div id="recentSubs" class="stat-list"></div>
         </div>
-      
 
-<!-- 支出分析板块 -->
-<div style="margin-top:32px;margin-bottom:16px;">
-  <h3 style="font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;">
-    <span>💰</span> 支出分析
-  </h3>
-</div>
-
+        <div class="analysis-header">
+          <h3 class="analysis-title">💰 支出分析</h3>
+        </div>
         <div class="analysis-stats-grid">
           <div class="stat-card">
-            <div class="label">💰 本月支出</div>
+            <div class="stat-label">💰 本月支出</div>
             <div class="value" id="analysisMonth">¥0</div>
-            <div class="sub">当前月份</div>
+            <div class="stat-sub">当前月份</div>
           </div>
           <div class="stat-card">
-            <div class="label">📊 年度支出</div>
+            <div class="stat-label">📊 年度支出</div>
             <div class="value" id="analysisYear">¥0</div>
-            <div class="sub">今年累计</div>
+            <div class="stat-sub">今年累计</div>
           </div>
           <div class="stat-card">
-            <div class="label">📈 日均支出</div>
+            <div class="stat-label">📈 日均支出</div>
             <div class="value" id="analysisDaily">¥0</div>
-            <div class="sub">按年分摊</div>
+            <div class="stat-sub">按年分摊</div>
           </div>
         </div>
         <div class="dash-grid">
           <div class="chart-container">
-            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">🏷️ 分类支出占比</h3>
-            <div id="categoryChart" style="display:flex;flex-direction:column;gap:14px;"></div>
+            <h3 class="chart-title">🏷️ 分类支出占比</h3>
+            <div id="categoryChart" class="stat-list"></div>
           </div>
           <div class="chart-container">
-            <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">📅 月度支出趋势</h3>
+            <h3 class="chart-title">📅 月度支出趋势</h3>
             <div class="chart-scroll-wrap">
-            <div id="monthlyChart" style="height:220px;padding-bottom:10px;border-bottom:1px solid var(--border);position:relative;"></div>
-          </div>
+              <div class="chart-svg-wrap" id="monthlyChart"></div>
+            </div>
           </div>
         </div>
-        <div class="chart-container" style="margin-top:20px;">
-          <h3 style="font-size:16px;margin-bottom:16px;color:var(--text);">💸 支出排行 TOP10</h3>
-          <div id="topExpense" style="display:flex;flex-direction:column;gap:10px;"></div>
-        </div>
-      
-</div>
-      <div id="calendarView" style="display:none;">
-        <div class="chart-container" style="margin-bottom:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)">◀ 上月</button>
-            <h3 id="calendarTitle" style="font-size:18px;color:var(--text);"></h3>
-            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">下月 ▶</button>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;">
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">日</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">一</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">二</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">三</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">四</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">五</div>
-            <div style="background:var(--card);padding:12px;text-align:center;font-weight:600;font-size:13px;color:var(--text-secondary);">六</div>
-          </div>
-          <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-top:1px;"></div>
-        </div>
-        <div id="calendarLegend" style="display:flex;gap:16px;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fee2e2;display:inline-block;"></span> 已过期</div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#fef3c7;display:inline-block;"></span> 即将到期</div>
-          <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);"><span style="width:12px;height:12px;border-radius:3px;background:#dbeafe;display:inline-block;"></span> 正常</div>
+        <div class="chart-container">
+          <h3 class="chart-title">💸 支出排行 TOP10</h3>
+          <div id="topExpense" class="stat-list"></div>
         </div>
       </div>
-      </main>
+
+      <!-- 日历视图 -->
+      <div id="calendarView" class="calendar-wrap" style="display:none;">
+        <div class="chart-container">
+          <div class="calendar-header">
+            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)">◀ 上月</button>
+            <h3 id="calendarTitle" class="calendar-title"></h3>
+            <button class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">下月 ▶</button>
+          </div>
+          <div class="calendar-week-header">
+            <div class="week-cell">日</div>
+            <div class="week-cell">一</div>
+            <div class="week-cell">二</div>
+            <div class="week-cell">三</div>
+            <div class="week-cell">四</div>
+            <div class="week-cell">五</div>
+            <div class="week-cell">六</div>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+        <div id="calendarLegend" class="calendar-legend">
+          <div class="legend-item">
+            <span class="legend-dot expired"></span>
+            <span>已过期</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot soon"></span>
+            <span>即将到期</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot normal"></span>
+            <span>正常</span>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
-
-
+  <!-- 新增/编辑服务弹窗（重构表单栅格布局，无ID修改） -->
   <div class="modal-bg" id="modalBg">
-    <div class="modal">
+    <div class="modal modal-sub">
       <div class="modal-header">
-        <h3 id="modalTitle">新增服务</h3>
+        <h3 id="modalTitle">新增订阅</h3>
         <button class="close-btn" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
+        <!-- 基础信息 -->
         <div class="form-section">
           <div class="form-section-title">📋 基础信息</div>
-          <div class="form-row form-row-2">
+          <div class="form-grid form-grid-2">
             <div class="form-group">
-              <label>名称 <span class="required">*</span></label>
+              <label for="mName">名称 <span class="required">*</span></label>
               <input type="text" id="mName" placeholder="例如：iCloud">
             </div>
             <div class="form-group">
-              <label>订阅类型</label>
+              <label for="mType">订阅类型</label>
               <select id="mType">
                 <option value="软件订阅">软件订阅</option>
                 <option value="电话">电话</option>
@@ -253,9 +280,10 @@
           </div>
         </div>
 
+        <!-- 通知渠道（HTML结构不变，纯CSS改为双列布局） -->
         <div class="form-section">
-          <div class="form-section-title">🔔 推送渠道</div>
-          <div class="hint" style="margin-bottom:10px;">选择推送渠道（留空则默认推送所有已启用的渠道）</div>
+          <div class="form-section-title">🔔 通知渠道</div>
+          <div class="hint">选择通知渠道（留空则默认推送所有已启用的渠道）</div>
           <div class="channel-selector" id="channelSelector">
             <label class="channel-option" onclick="toggleChannel(this, 'dingtalk')">
               <input type="checkbox" value="dingtalk"> 📱 钉钉
@@ -272,16 +300,17 @@
           </div>
         </div>
 
+        <!-- 金额设置 -->
         <div class="form-section">
           <div class="form-section-title">💰 金额设置</div>
-          <div class="form-row">
+          <div class="form-grid form-grid-3">
             <div class="form-group">
-              <label>账单额</label>
+              <label for="mPrice">账单额</label>
               <input type="number" id="mPrice" placeholder="0.00" step="0.01" min="0">
               <div class="hint">用于统计支出和生成仪表盘</div>
             </div>
             <div class="form-group">
-              <label>币种</label>
+              <label for="mCurrency">币种</label>
               <select id="mCurrency">
                 <option value="CNY">CNY</option>
                 <option value="USD">USD</option>
@@ -294,28 +323,32 @@
               <label>模式 <span class="required">*</span></label>
               <div class="mode-selector">
                 <div class="mode-option active" onclick="setMode('recurring')" data-mode="recurring">
-                  <span class="icon">🔄</span><div>循环订阅</div>
+                  <span class="mode-icon">🔄</span>
+                  <span class="mode-text">循环订阅</span>
                 </div>
                 <div class="mode-option" onclick="setMode('reset')" data-mode="reset">
-                  <span class="icon">⏳</span><div>到期重置</div>
+                  <span class="mode-icon">⏳</span>
+                  <span class="mode-text">到期重置</span>
                 </div>
                 <div class="mode-option" onclick="setMode('fixed')" data-mode="fixed">
-                  <span class="icon">📅</span><div>固定重复</div>
+                  <span class="mode-icon">📅</span>
+                  <span class="mode-text">固定重复</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- 周期设置（核心优化：日期规整排布） -->
         <div class="form-section">
           <div class="form-section-title">⏱️ 周期设置</div>
-          <div class="form-row">
+          <div class="form-grid form-grid-2">
             <div class="form-group">
-              <label>周期时长 <span class="required">*</span></label>
+              <label for="mCycleValue">周期时长 <span class="required">*</span></label>
               <input type="number" id="mCycleValue" value="1" min="1">
             </div>
             <div class="form-group">
-              <label>周期单位 <span class="required">*</span></label>
+              <label for="mCycleUnit">周期单位 <span class="required">*</span></label>
               <select id="mCycleUnit" onchange="calcNextDate()">
                 <option value="day">天</option>
                 <option value="week">周</option>
@@ -325,65 +358,74 @@
               </select>
             </div>
           </div>
-          <div class="form-row form-row-2">
+          <div class="form-grid form-grid-2">
             <div class="form-group">
-              <label>创建时间 <span class="required">*</span></label>
+              <label for="mStartDate">创建时间 <span class="required">*</span></label>
               <input type="date" id="mStartDate" onchange="calcNextDate()">
             </div>
             <div class="form-group">
-              <label>上次续期 <span class="required">*</span></label>
+              <label for="mLastRenewDate">上次续期 <span class="required">*</span></label>
               <input type="date" id="mLastRenewDate" onchange="calcNextDate()">
               <div class="hint">修改此日期将重新计算下次到期</div>
             </div>
           </div>
-          <div class="form-row form-row-2">
+          <div class="form-grid form-grid-2">
             <div class="form-group">
-              <label>到期日期 <span class="required">*</span></label>
+              <label for="mNextDate">到期日期 <span class="required">*</span></label>
               <input type="date" id="mNextDate">
               <div class="hint">可手动修改或自动计算</div>
             </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;">
-              <button class="btn btn-secondary" onclick="autoCalcDate()" style="width:100%;">
-                🧮 自动计算到期日期
-              </button>
+            <div class="form-group form-btn-group">
+              <label>&nbsp;</label>
+              <button class="btn btn-secondary btn-full" onclick="autoCalcDate()">🧮 自动计算到期日期</button>
             </div>
           </div>
         </div>
 
+        <!-- 提醒设置 -->
         <div class="form-section">
           <div class="form-section-title">🔔 提醒设置</div>
-          <div class="form-row">
+          <div class="form-grid form-grid-3">
             <div class="form-group">
-              <label>提醒提前天数 <span class="required">*</span></label>
+              <label for="mNotifyDays">提醒提前天数 <span class="required">*</span></label>
               <input type="number" id="mNotifyDays" value="3" min="0">
             </div>
             <div class="form-group">
-              <label>提醒时间</label>
+              <label for="mNotifyTime">提醒时间</label>
               <input type="time" id="mNotifyTime" value="11:00">
             </div>
             <div class="form-group">
-              <label>过期续期天数</label>
+              <label for="mExpiredRenewDays">过期续期天数</label>
               <input type="number" id="mExpiredRenewDays" value="3" min="0">
             </div>
           </div>
-          <div id="notifyPreview" class="notify-preview" style="display:none;"></div>
+          <div id="notifyPreview" class="notify-preview"></div>
         </div>
 
+        <!-- 开关选项 -->
         <div class="form-section">
           <div class="form-section-title">⚙️ 选项设置</div>
           <div class="switch-row">
-            <div class="switch-info"><h4>启用订阅</h4><p>停用后将不再发送提醒</p></div>
+            <div class="switch-info">
+              <h4>启用订阅</h4>
+              <p>停用后将不再发送提醒</p>
+            </div>
             <input type="checkbox" class="toggle" id="mEnabled" checked>
           </div>
           <div class="switch-row">
-            <div class="switch-info"><h4>自动续期</h4><p>到期后自动更新下次到期日期</p></div>
+            <div class="switch-info">
+              <h4>自动续期</h4>
+              <p>到期后自动更新下次到期日期</p>
+            </div>
             <input type="checkbox" class="toggle" id="mAutoRenew">
           </div>
         </div>
 
+        <!-- 备注 -->
         <div class="form-section">
           <div class="form-section-title">📝 备注信息</div>
           <div class="form-group">
+            <label for="mNote">备注</label>
             <textarea id="mNote" rows="3" placeholder="可添加相关备注信息..."></textarea>
           </div>
         </div>
@@ -395,6 +437,7 @@
     </div>
   </div>
 
+  <!-- 通知配置弹窗 -->
   <div class="modal-bg" id="notifyModalBg">
     <div class="modal notify-modal">
       <div class="modal-header">
@@ -408,47 +451,79 @@
           <button class="notify-tab" onclick="switchNotifyTab('wecom')">💼 企微</button>
           <button class="notify-tab" onclick="switchNotifyTab('email')">📧 邮件</button>
         </div>
-        <div class="notify-section active" id="tab-dingtalk">
-          <div class="switch-row" style="margin-bottom:16px;">
-            <div class="switch-info"><h4>启用钉钉通知</h4></div>
-            <input type="checkbox" class="toggle" id="dingtalkEnabled">
+        <div class="notify-panels">
+          <div class="notify-section active" id="tab-dingtalk">
+            <div class="switch-row">
+              <div class="switch-info"><h4>启用钉钉通知</h4></div>
+              <input type="checkbox" class="toggle" id="dingtalkEnabled">
+            </div>
+            <div class="form-group">
+              <label>Webhook 地址</label>
+              <input type="text" id="dingtalkWebhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx">
+            </div>
+            <div class="form-group">
+              <label>加签密钥（可选）</label>
+              <input type="text" id="dingtalkSecret" placeholder="SECxxxxxxxx">
+            </div>
+            <button class="btn btn-success btn-sm" onclick="testNotify('dingtalk')">发送测试消息</button>
           </div>
-          <div class="form-group"><label>Webhook 地址</label><input type="text" id="dingtalkWebhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx"></div>
-          <div class="form-group"><label>加签密钥（可选）</label><input type="text" id="dingtalkSecret" placeholder="SECxxxxxxxx"></div>
-          <button class="btn btn-success btn-sm" onclick="testNotify('dingtalk')" style="margin-top:10px;">发送测试消息</button>
-        </div>
-        <div class="notify-section" id="tab-feishu">
-          <div class="switch-row" style="margin-bottom:16px;">
-            <div class="switch-info"><h4>启用飞书通知</h4></div>
-            <input type="checkbox" class="toggle" id="feishuEnabled">
+          <div class="notify-section" id="tab-feishu">
+            <div class="switch-row">
+              <div class="switch-info"><h4>启用飞书通知</h4></div>
+              <input type="checkbox" class="toggle" id="feishuEnabled">
+            </div>
+            <div class="form-group">
+              <label>Webhook 地址</label>
+              <input type="text" id="feishuWebhook" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx">
+            </div>
+            <div class="form-group">
+              <label>加签密钥（可选）</label>
+              <input type="text" id="feishuSecret" placeholder="xxxxxxxx">
+            </div>
+            <button class="btn btn-success btn-sm" onclick="testNotify('feishu')">发送测试消息</button>
           </div>
-          <div class="form-group"><label>Webhook 地址</label><input type="text" id="feishuWebhook" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"></div>
-          <div class="form-group"><label>加签密钥（可选）</label><input type="text" id="feishuSecret" placeholder="xxxxxxxx"></div>
-          <button class="btn btn-success btn-sm" onclick="testNotify('feishu')" style="margin-top:10px;">发送测试消息</button>
-        </div>
-        <div class="notify-section" id="tab-wecom">
-          <div class="switch-row" style="margin-bottom:16px;">
-            <div class="switch-info"><h4>启用企业微信通知</h4></div>
-            <input type="checkbox" class="toggle" id="wecomEnabled">
+          <div class="notify-section" id="tab-wecom">
+            <div class="switch-row">
+              <div class="switch-info"><h4>启用企业微信通知</h4></div>
+              <input type="checkbox" class="toggle" id="wecomEnabled">
+            </div>
+            <div class="form-group">
+              <label>Webhook 地址（或 Key）</label>
+              <input type="text" id="wecomWebhook" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx">
+            </div>
+            <button class="btn btn-success btn-sm" onclick="testNotify('wecom')">发送测试消息</button>
           </div>
-          <div class="form-group"><label>Webhook 地址（或 Key）</label><input type="text" id="wecomWebhook" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"></div>
-          <button class="btn btn-success btn-sm" onclick="testNotify('wecom')" style="margin-top:10px;">发送测试消息</button>
-        </div>
-        <div class="notify-section" id="tab-email">
-          <div class="switch-row" style="margin-bottom:16px;">
-            <div class="switch-info"><h4>启用邮件通知</h4></div>
-            <input type="checkbox" class="toggle" id="emailEnabled">
+          <div class="notify-section" id="tab-email">
+            <div class="switch-row">
+              <div class="switch-info"><h4>启用邮件通知</h4></div>
+              <input type="checkbox" class="toggle" id="emailEnabled">
+            </div>
+            <div class="form-grid form-grid-2">
+              <div class="form-group">
+                <label>SMTP 服务器</label>
+                <input type="text" id="emailSmtpHost" placeholder="smtp.gmail.com">
+              </div>
+              <div class="form-group">
+                <label>端口</label>
+                <input type="number" id="emailSmtpPort" value="587">
+              </div>
+            </div>
+            <div class="form-grid form-grid-2">
+              <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="emailUsername" placeholder="your@email.com">
+              </div>
+              <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="emailPassword" placeholder="应用专用密码">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>接收邮箱</label>
+              <input type="text" id="emailTo" placeholder="notify@email.com">
+            </div>
+            <button class="btn btn-success btn-sm" onclick="testNotify('email')">发送测试消息</button>
           </div>
-          <div class="form-row form-row-2">
-            <div class="form-group"><label>SMTP 服务器</label><input type="text" id="emailSmtpHost" placeholder="smtp.gmail.com"></div>
-            <div class="form-group"><label>端口</label><input type="number" id="emailSmtpPort" value="587"></div>
-          </div>
-          <div class="form-row form-row-2">
-            <div class="form-group"><label>用户名</label><input type="text" id="emailUsername" placeholder="your@email.com"></div>
-            <div class="form-group"><label>密码</label><input type="password" id="emailPassword" placeholder="应用专用密码"></div>
-          </div>
-          <div class="form-group"><label>接收邮箱</label><input type="text" id="emailTo" placeholder="notify@email.com"></div>
-          <button class="btn btn-success btn-sm" onclick="testNotify('email')" style="margin-top:10px;">发送测试消息</button>
         </div>
       </div>
       <div class="modal-footer">
