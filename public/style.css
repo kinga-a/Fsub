@@ -485,15 +485,14 @@ tr:hover td { background: var(--gray-50); }
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-xl);
 }
-
 #cardView > div {
   background: var(--card);
-  border-radius: var(--radius-md);
+  border-radius: 14px !important;
+  overflow: hidden !important;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
-  transition: transform var(--normal), box-shadow var(--normal);
-  overflow: hidden;
   padding: 20px;
+  transition: transform var(--normal), box-shadow var(--normal);
 }
 
 #cardView > div:hover {
