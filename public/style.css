@@ -63,6 +63,12 @@ html, body {
   height: 100%;
   height: 100dvh;
   overflow-x: hidden;
+  /* 禁止垂直方向溢出滚动（如果不需要页面上下滑动）就用下面这行 */
+  /* overflow-y: hidden; */
+
+  /* 隐藏垂直滚动条，依然可以鼠标滚轮、触屏上下滑动页面 */
+  -ms-overflow-style: none;  /* IE、Edge兼容 */
+  scrollbar-width: none;     /* Firefox兼容 */
 }
 
 * {
@@ -898,7 +904,7 @@ tr:hover td { background: var(--gray-50); }
 .toast.error { background: var(--danger); }
 
 /* 滚动条兼容（Chrome/Edge/Safari） */
-::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar { width: 8px; height: 8px; display: none; }
 ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
@@ -921,7 +927,7 @@ tr:hover td { background: var(--gray-50); }
   .stats-grid, .analysis-stats-grid { grid-template-columns: 2,1fr; }
   .dash-grid  { grid-template-columns: 1fr; }
   .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
-  .topbar { flex-direction: column; align-items: flex-start; gap: var(--space-md); }
+  .topbar { align-items: flex-start; gap: var(--space-md); }
   .toolbar { flex-direction: column; align-items: stretch; }
   .toolbar-filter-group { width: 100%; }
   .search-box { width: 100%; }
